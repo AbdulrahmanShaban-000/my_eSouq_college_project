@@ -31,8 +31,7 @@ class MyLocale implements Translations {
       'see_all': 'See All',
 
       // ================= Auth =================
-      'first_name': 'First Name',
-      'last_name': 'Last Name',
+      'name': 'Full Name',
       'email': 'Email',
       'password': 'Password',
       'password_confirm': 'Confirm Password',
@@ -43,6 +42,7 @@ class MyLocale implements Translations {
       'sitc': 'Sign in to continue!',
       'accept_terms_first': 'Accept terms first',
       'terms': 'I agree to the terms and conditions',
+      'phone': 'Phone Number',
 
       // Validation
       'email_required': 'Email is required',
@@ -104,8 +104,7 @@ class MyLocale implements Translations {
       'see_all': 'عرض الكل',
 
       // ================= Auth =================
-      'first_name': 'الاسم الأول',
-      'last_name': 'الاسم الأخير',
+      'name': 'الاسم الكامل',
       'email': 'البريد الإلكتروني',
       'password': 'كلمة المرور',
       'password_confirm': 'تأكيد كلمة المرور',
@@ -116,7 +115,7 @@ class MyLocale implements Translations {
       'sitc': 'الرجاء تسجيل الدخول للمتابعة!',
       'accept_terms_first': 'يرجى قبول الشروط أولاً',
       'terms': 'أوافق على الشروط والأحكام',
-
+      'phone': 'رقم الهاتف',
       // Validation
       'email_required': 'البريد مطلوب',
       'password_required': 'كلمة المرور مطلوبة',

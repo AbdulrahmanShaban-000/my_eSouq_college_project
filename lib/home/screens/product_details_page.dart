@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 
 import 'package:my_esouq/controllers/cart_controller.dart';
 import 'package:my_esouq/controllers/favourits_controller.dart';
+import 'package:my_esouq/home/screens/profile_page.dart';
 
 import 'package:my_esouq/home/screens/app_drawer.dart';
 import 'package:my_esouq/home/screens/cart_page.dart';
@@ -25,6 +26,10 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
 
   final CartController cartController = Get.find<CartController>();
 
+  final RecentOrdersController recentOrdersController = Get.put(
+    RecentOrdersController(),
+  );
+
   int selectedSize = 0;
   int selectedColor = 0;
   int quantity = 1;
@@ -39,6 +44,7 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
   ];
 
   late final List<String> images;
+
   int currentImage = 0;
 
   @override
@@ -60,11 +66,14 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
     }
   }
 
-  /// ✅ FIXED ADD TO CART
+  /// ✅ ADD TO CART + RECENT ORDERS
   void addToCart() {
     final product = {...widget.product, 'quantity': quantity};
 
     cartController.addToCart(product);
+
+    // ✅ إضافة للطلبات الأخيرة
+    recentOrdersController.addOrder(product);
 
     Get.snackbar(
       'Cart',
@@ -96,7 +105,7 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
 
         child: CustomScrollView(
           slivers: [
-            /// APP BAR (same design)
+            /// APP BAR
             SliverAppBar(
               expandedHeight: 350,
               floating: false,
@@ -114,7 +123,7 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
                   onPressed: () {},
                 ),
 
-                /// ❤️ FIXED FAVORITE
+                /// ❤️ FAVORITE
                 Obx(() {
                   final isFav = favouriteController.isFavourite(
                     widget.product['id'],
@@ -142,6 +151,7 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
               flexibleSpace: FlexibleSpaceBar(
                 title: Text(
                   widget.product['name'],
+
                   style: const TextStyle(
                     color: Colors.white,
                     fontWeight: FontWeight.bold,
@@ -198,7 +208,7 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
               ),
             ),
 
-            /// CONTENT (same design)
+            /// CONTENT
             SliverToBoxAdapter(
               child: Padding(
                 padding: const EdgeInsets.all(16),
@@ -241,6 +251,7 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
 
                     Text(
                       '${widget.product['category'] ?? ''} • Premium Quality',
+
                       style: const TextStyle(color: Colors.blueAccent),
                     ),
 
@@ -259,6 +270,7 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
                     /// SIZE
                     const Text(
                       'Size',
+
                       style: TextStyle(
                         color: Colors.white,
                         fontSize: 18,
@@ -299,6 +311,7 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
 
                             child: Text(
                               sizes[index],
+
                               style: const TextStyle(
                                 color: Colors.white,
                                 fontWeight: FontWeight.bold,
@@ -314,6 +327,7 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
                     /// COLORS
                     const Text(
                       'Color',
+
                       style: TextStyle(
                         color: Colors.white,
                         fontSize: 18,
@@ -349,6 +363,7 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
                                 color: selectedColor == index
                                     ? Colors.white
                                     : Colors.transparent,
+
                                 width: 3,
                               ),
                             ),
@@ -364,6 +379,7 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
                       children: [
                         const Text(
                           'Quantity',
+
                           style: TextStyle(color: Colors.white),
                         ),
 
@@ -372,6 +388,7 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
                         Container(
                           decoration: BoxDecoration(
                             color: Colors.white.withOpacity(0.1),
+
                             borderRadius: BorderRadius.circular(25),
                           ),
 
@@ -379,6 +396,7 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
                             children: [
                               IconButton(
                                 onPressed: decrementQuantity,
+
                                 icon: const Icon(
                                   Icons.remove,
                                   color: Colors.white,
@@ -387,6 +405,7 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
 
                               Text(
                                 '$quantity',
+
                                 style: const TextStyle(
                                   color: Colors.white,
                                   fontSize: 18,
@@ -395,6 +414,7 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
 
                               IconButton(
                                 onPressed: incrementQuantity,
+
                                 icon: const Icon(
                                   Icons.add,
                                   color: Colors.white,
@@ -411,6 +431,7 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
                     /// TOTAL
                     Text(
                       'Total: ${total.toStringAsFixed(2)} \$',
+
                       style: const TextStyle(
                         color: Colors.green,
                         fontSize: 24,
@@ -420,18 +441,55 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
 
                     const SizedBox(height: 32),
 
-                    /// BUTTONS
+                    /// BUTTON
                     Row(
                       children: [
                         Expanded(
-                          child: OutlinedButton(
-                            onPressed: addToCart,
-                            child: Text(
-                              'add_to_cart'.tr,
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 20,
-                                fontWeight: FontWeight.bold,
+                          child: Container(
+                            height: 58,
+                            decoration: BoxDecoration(
+                              gradient: const LinearGradient(
+                                colors: [Color(0xFF3B82F6), Color(0xFF2563EB)],
+                              ),
+                              borderRadius: BorderRadius.circular(18),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.blueAccent.withOpacity(0.35),
+                                  blurRadius: 12,
+                                  offset: const Offset(0, 6),
+                                ),
+                              ],
+                            ),
+                            child: ElevatedButton(
+                              onPressed: addToCart,
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.transparent,
+                                shadowColor: Colors.transparent,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(18),
+                                ),
+                              ),
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  const Icon(
+                                    Icons.shopping_cart_checkout_rounded,
+                                    color: Colors.white,
+                                    size: 24,
+                                  ),
+
+                                  const SizedBox(width: 10),
+
+                                  Text(
+                                    'add_to_cart'.tr,
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 19,
+                                      fontWeight: FontWeight.bold,
+                                      letterSpacing: 0.5,
+                                    ),
+                                  ),
+                                ],
                               ),
                             ),
                           ),

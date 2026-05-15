@@ -90,6 +90,7 @@ class _HomePageState extends State<HomePage> {
               pinned: true,
               backgroundColor: const Color(0xFF0F2027),
               elevation: 0,
+              iconTheme: const IconThemeData(color: Colors.white),
 
               title: Text(
                 'my_esouq'.tr,

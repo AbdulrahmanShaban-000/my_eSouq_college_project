@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:my_esouq/controllers/favourits_controller.dart';
- 
+
 import 'package:my_esouq/home/screens/app_drawer.dart';
 import 'package:my_esouq/home/screens/nav_bar.dart';
 
 class FavouritesPage extends StatelessWidget {
   FavouritesPage({super.key});
-final FavouriteController favouriteController =
+  final FavouriteController favouriteController =
       Get.find<FavouriteController>();
 
   void addToCart(Map<String, dynamic> item) {
@@ -37,6 +37,7 @@ final FavouriteController favouriteController =
             slivers: [
               /// APP BAR
               SliverAppBar(
+                iconTheme: const IconThemeData(color: Colors.white),
                 expandedHeight: 140,
                 floating: true,
                 pinned: true,

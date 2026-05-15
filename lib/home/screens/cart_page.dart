@@ -35,6 +35,7 @@ class CartPage extends StatelessWidget {
             slivers: [
               /// APP BAR
               SliverAppBar(
+                iconTheme: const IconThemeData(color: Colors.white),
                 expandedHeight: 150,
                 floating: true,
                 pinned: true,
@@ -266,8 +267,14 @@ class CartPage extends StatelessWidget {
                                 IconButton(
                                   onPressed: () {
                                     cartController.removeItem(item['id']);
-                                  },
+                                    final RecentOrdersController
+                                    recentOrdersController =
+                                        Get.find<RecentOrdersController>();
 
+                                    recentOrdersController.removeOrder(
+                                      item['id'],
+                                    );
+                                  },
                                   icon: const Icon(
                                     Icons.delete_outline,
                                     color: Colors.redAccent,

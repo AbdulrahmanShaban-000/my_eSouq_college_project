@@ -170,7 +170,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         TextFormField(
                           controller: name,
                           style: const TextStyle(color: Colors.white),
-                          decoration: _input("first_name".tr, Icons.person),
+                          decoration: _input("name".tr, Icons.person),
                           validator: (v) =>
                               (v == null || v.isEmpty) ? "Required" : null,
                         ),
