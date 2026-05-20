@@ -3,9 +3,8 @@ import 'package:get/get.dart';
 
 import 'package:my_esouq/controllers/cart_controller.dart';
 import 'package:my_esouq/controllers/favourits_controller.dart';
-import 'package:my_esouq/home/screens/profile_page.dart';
+import 'package:my_esouq/controllers/recent_orders_controller.dart';
 
-import 'package:my_esouq/home/screens/app_drawer.dart';
 import 'package:my_esouq/home/screens/cart_page.dart';
 import 'package:my_esouq/home/screens/favourites_page.dart';
 import 'package:my_esouq/home/screens/home_page.dart';
@@ -23,12 +22,9 @@ class ProductDetailsPage extends StatefulWidget {
 class _ProductDetailsPageState extends State<ProductDetailsPage> {
   final FavouriteController favouriteController =
       Get.find<FavouriteController>();
-
   final CartController cartController = Get.find<CartController>();
-
-  final RecentOrdersController recentOrdersController = Get.put(
-    RecentOrdersController(),
-  );
+  final RecentOrdersController recentOrdersController =
+      Get.find<RecentOrdersController>();
 
   int selectedSize = 0;
   int selectedColor = 0;
@@ -45,39 +41,20 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
 
   late final List<String> images;
 
-  int currentImage = 0;
-
   @override
   void initState() {
     super.initState();
-
-    images = [
-      widget.product['image'] ?? '',
-      'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=500',
-      'https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=500',
-    ];
+    images = [widget.product['image']];
   }
 
-  void incrementQuantity() => setState(() => quantity++);
-
-  void decrementQuantity() {
-    if (quantity > 1) {
-      setState(() => quantity--);
-    }
-  }
-
-  /// ✅ ADD TO CART + RECENT ORDERS
   void addToCart() {
     final product = {...widget.product, 'quantity': quantity};
-
     cartController.addToCart(product);
-
-    // ✅ إضافة للطلبات الأخيرة
-    recentOrdersController.addOrder(product);
+    recentOrdersController.addOrder(widget.product);
 
     Get.snackbar(
       'Cart',
-      '${widget.product['name']} added to cart',
+      'Added successfully',
       backgroundColor: Colors.green,
       colorText: Colors.white,
     );
@@ -86,14 +63,11 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
   @override
   Widget build(BuildContext context) {
     final priceText = widget.product['price'].toString().replaceAll('\$', '');
-
     final priceNum = double.tryParse(priceText) ?? 0;
-
     final total = priceNum * quantity;
 
     return Scaffold(
-      drawer: AppDrawer(),
-
+      backgroundColor: const Color(0xFF0F2027),
       body: Container(
         decoration: const BoxDecoration(
           gradient: LinearGradient(
@@ -102,104 +76,54 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
             colors: [Color(0xFF0F2027), Color(0xFF203A43), Color(0xFF2C5364)],
           ),
         ),
-
         child: CustomScrollView(
           slivers: [
-            /// APP BAR
+            /// APP BAR + IMAGE (SMALL & CLEAN)
             SliverAppBar(
-              expandedHeight: 350,
-              floating: false,
+              expandedHeight: 280,
               pinned: true,
               backgroundColor: const Color(0xFF0F2027),
-
               leading: IconButton(
                 icon: const Icon(Icons.arrow_back, color: Colors.white),
                 onPressed: () => Get.back(),
               ),
-
               actions: [
-                IconButton(
-                  icon: const Icon(Icons.share, color: Colors.white),
-                  onPressed: () {},
-                ),
-
-                /// ❤️ FAVORITE
                 Obx(() {
                   final isFav = favouriteController.isFavourite(
                     widget.product['id'],
                   );
-
                   return IconButton(
                     icon: Icon(
                       isFav ? Icons.favorite : Icons.favorite_border,
                       color: isFav ? Colors.red : Colors.white,
                     ),
-
                     onPressed: () {
-                      if (isFav) {
-                        favouriteController.removeFavourite(
-                          widget.product['id'],
-                        );
-                      } else {
-                        favouriteController.addToFavourite(widget.product);
-                      }
+                      isFav
+                          ? favouriteController.removeFavourite(
+                              widget.product['id'],
+                            )
+                          : favouriteController.addToFavourite(widget.product);
                     },
                   );
                 }),
               ],
-
               flexibleSpace: FlexibleSpaceBar(
-                title: Text(
-                  widget.product['name'],
-
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-
                 background: Stack(
                   children: [
                     PageView.builder(
                       itemCount: images.length,
-
-                      onPageChanged: (i) => setState(() => currentImage = i),
-
-                      itemBuilder: (_, i) => Container(
-                        decoration: BoxDecoration(
-                          image: DecorationImage(
-                            image: NetworkImage(images[i]),
-                            fit: BoxFit.cover,
-                          ),
-                        ),
-                      ),
+                      itemBuilder: (_, i) =>
+                          Image.network(images[i], fit: BoxFit.cover),
                     ),
-
-                    Positioned(
-                      bottom: 20,
-                      left: 0,
-                      right: 0,
-
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-
-                        children: List.generate(
-                          images.length,
-                          (i) => Container(
-                            margin: const EdgeInsets.symmetric(horizontal: 4),
-
-                            width: currentImage == i ? 24 : 8,
-
-                            height: 8,
-
-                            decoration: BoxDecoration(
-                              color: currentImage == i
-                                  ? Colors.white
-                                  : Colors.white54,
-
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                          ),
+                    Container(
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.bottomCenter,
+                          end: Alignment.topCenter,
+                          colors: [
+                            Colors.black.withOpacity(0.4),
+                            Colors.transparent,
+                          ],
                         ),
                       ),
                     ),
@@ -212,209 +136,170 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
             SliverToBoxAdapter(
               child: Padding(
                 padding: const EdgeInsets.all(16),
-
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
-
                   children: [
-                    /// PRICE + RATING
+                    /// TITLE + PRICE
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
-
                       children: [
-                        Text(
-                          widget.product['price'],
-
-                          style: const TextStyle(
-                            fontSize: 28,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.green,
+                        Expanded(
+                          child: Text(
+                            widget.product['name'],
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
                         ),
-
-                        Row(
-                          children: [
-                            const Icon(Icons.star, color: Colors.amber),
-
-                            const SizedBox(width: 5),
-
-                            Text(
-                              '${widget.product['rating']}',
-                              style: const TextStyle(color: Colors.white70),
-                            ),
-                          ],
+                        Text(
+                          widget.product['price'],
+                          style: const TextStyle(
+                            color: Colors.green,
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
                       ],
                     ),
 
-                    const SizedBox(height: 10),
+                    const SizedBox(height: 6),
 
-                    Text(
-                      '${widget.product['category'] ?? ''} • Premium Quality',
-
-                      style: const TextStyle(color: Colors.blueAccent),
+                    Row(
+                      children: [
+                        const Icon(Icons.star, color: Colors.amber, size: 18),
+                        const SizedBox(width: 4),
+                        Text(
+                          '${widget.product['rating']}',
+                          style: const TextStyle(color: Colors.white70),
+                        ),
+                      ],
                     ),
 
-                    const SizedBox(height: 24),
+                    const SizedBox(height: 16),
 
-                    /// DESCRIPTION
-                    Text(
-                      widget.product['description'] ??
-                          'Premium quality product.',
-
-                      style: const TextStyle(color: Colors.white, height: 1.5),
+                    /// DESCRIPTION (CLEAR READABILITY)
+                    Container(
+                      padding: const EdgeInsets.all(14),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.06),
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(color: Colors.white12),
+                      ),
+                      child: Text(
+                        widget.product['description'] ?? '',
+                        style: const TextStyle(
+                          color: Colors.white70,
+                          height: 1.5,
+                        ),
+                      ),
                     ),
 
-                    const SizedBox(height: 24),
+                    const SizedBox(height: 20),
 
                     /// SIZE
                     const Text(
                       'Size',
-
                       style: TextStyle(
                         color: Colors.white,
-                        fontSize: 18,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
-
-                    const SizedBox(height: 12),
-
-                    SizedBox(
-                      height: 45,
-
-                      child: ListView.builder(
-                        scrollDirection: Axis.horizontal,
-
-                        itemCount: sizes.length,
-
-                        itemBuilder: (context, index) => GestureDetector(
-                          onTap: () => setState(() => selectedSize = index),
-
+                    const SizedBox(height: 10),
+                    Wrap(
+                      spacing: 10,
+                      children: List.generate(sizes.length, (i) {
+                        final selected = selectedSize == i;
+                        return GestureDetector(
+                          onTap: () => setState(() => selectedSize = i),
                           child: Container(
-                            margin: const EdgeInsets.only(right: 12),
-
                             padding: const EdgeInsets.symmetric(
-                              horizontal: 20,
-                              vertical: 10,
+                              horizontal: 14,
+                              vertical: 8,
                             ),
-
                             decoration: BoxDecoration(
-                              color: selectedSize == index
-                                  ? Colors.blueAccent.withOpacity(0.3)
-                                  : Colors.white10,
-
-                              borderRadius: BorderRadius.circular(25),
-
-                              border: Border.all(color: Colors.white30),
+                              color: selected
+                                  ? Colors.blueAccent
+                                  : Colors.white12,
+                              borderRadius: BorderRadius.circular(20),
                             ),
-
                             child: Text(
-                              sizes[index],
-
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontWeight: FontWeight.bold,
-                              ),
+                              sizes[i],
+                              style: const TextStyle(color: Colors.white),
                             ),
                           ),
-                        ),
-                      ),
+                        );
+                      }),
                     ),
 
-                    const SizedBox(height: 24),
+                    const SizedBox(height: 20),
 
-                    /// COLORS
+                    /// COLOR
                     const Text(
                       'Color',
-
                       style: TextStyle(
                         color: Colors.white,
-                        fontSize: 18,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
-
-                    const SizedBox(height: 12),
-
-                    SizedBox(
-                      height: 50,
-
-                      child: ListView.builder(
-                        scrollDirection: Axis.horizontal,
-
-                        itemCount: colors.length,
-
-                        itemBuilder: (context, index) => GestureDetector(
-                          onTap: () => setState(() => selectedColor = index),
-
+                    const SizedBox(height: 10),
+                    Row(
+                      children: List.generate(colors.length, (i) {
+                        final selected = selectedColor == i;
+                        return GestureDetector(
+                          onTap: () => setState(() => selectedColor = i),
                           child: Container(
-                            margin: const EdgeInsets.only(right: 12),
-
-                            width: 40,
-                            height: 40,
-
+                            margin: const EdgeInsets.only(right: 10),
+                            width: 26,
+                            height: 26,
                             decoration: BoxDecoration(
-                              color: colors[index]['color'],
-
+                              color: colors[i]['color'],
                               shape: BoxShape.circle,
-
                               border: Border.all(
-                                color: selectedColor == index
+                                color: selected
                                     ? Colors.white
                                     : Colors.transparent,
-
-                                width: 3,
+                                width: 2,
                               ),
                             ),
                           ),
-                        ),
-                      ),
+                        );
+                      }),
                     ),
 
-                    const SizedBox(height: 24),
+                    const SizedBox(height: 20),
 
                     /// QUANTITY
                     Row(
                       children: [
                         const Text(
                           'Quantity',
-
                           style: TextStyle(color: Colors.white),
                         ),
-
                         const Spacer(),
-
                         Container(
                           decoration: BoxDecoration(
-                            color: Colors.white.withOpacity(0.1),
-
-                            borderRadius: BorderRadius.circular(25),
+                            color: Colors.white.withValues(alpha: 0.08),
+                            borderRadius: BorderRadius.circular(20),
                           ),
-
                           child: Row(
                             children: [
                               IconButton(
-                                onPressed: decrementQuantity,
-
+                                onPressed: () {
+                                  if (quantity > 1) setState(() => quantity--);
+                                },
                                 icon: const Icon(
                                   Icons.remove,
                                   color: Colors.white,
                                 ),
                               ),
-
                               Text(
                                 '$quantity',
-
-                                style: const TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 18,
-                                ),
+                                style: const TextStyle(color: Colors.white),
                               ),
-
                               IconButton(
-                                onPressed: incrementQuantity,
-
+                                onPressed: () => setState(() => quantity++),
                                 icon: const Icon(
                                   Icons.add,
                                   color: Colors.white,
@@ -426,76 +311,57 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
                       ],
                     ),
 
-                    const SizedBox(height: 20),
+                    const SizedBox(height: 16),
 
                     /// TOTAL
                     Text(
-                      'Total: ${total.toStringAsFixed(2)} \$',
-
+                      'Total: \$${total.toStringAsFixed(2)}',
                       style: const TextStyle(
                         color: Colors.green,
-                        fontSize: 24,
+                        fontSize: 22,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
 
-                    const SizedBox(height: 32),
+                    const SizedBox(height: 24),
 
                     /// BUTTON
-                    Row(
-                      children: [
-                        Expanded(
-                          child: Container(
-                            height: 58,
-                            decoration: BoxDecoration(
-                              gradient: const LinearGradient(
-                                colors: [Color(0xFF3B82F6), Color(0xFF2563EB)],
-                              ),
-                              borderRadius: BorderRadius.circular(18),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Colors.blueAccent.withOpacity(0.35),
-                                  blurRadius: 12,
-                                  offset: const Offset(0, 6),
-                                ),
-                              ],
-                            ),
-                            child: ElevatedButton(
-                              onPressed: addToCart,
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: Colors.transparent,
-                                shadowColor: Colors.transparent,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(18),
-                                ),
-                              ),
-                              child: Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  const Icon(
-                                    Icons.shopping_cart_checkout_rounded,
-                                    color: Colors.white,
-                                    size: 24,
-                                  ),
-
-                                  const SizedBox(width: 10),
-
-                                  Text(
-                                    'add_to_cart'.tr,
-                                    style: const TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 19,
-                                      fontWeight: FontWeight.bold,
-                                      letterSpacing: 0.5,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
+                    SizedBox(
+                      width: double.infinity,
+                      height: 55,
+                      child: ElevatedButton(
+                        onPressed: addToCart,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.blueAccent,
+                          shadowColor: Colors.transparent,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(18),
                           ),
                         ),
-                      ],
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            const Icon(
+                              Icons.shopping_cart_checkout_rounded,
+                              color: Colors.white,
+                              size: 24,
+                            ),
+                            const SizedBox(width: 10),
+                            Text(
+                              'add_to_cart'.tr,
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 19,
+                                fontWeight: FontWeight.bold,
+                                letterSpacing: 0.5,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
                     ),
+
+                    const SizedBox(height: 30),
                   ],
                 ),
               ),
@@ -506,17 +372,14 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
 
       bottomNavigationBar: NavBar(
         currentIndex: 3,
-
         onTap: (index) {
           switch (index) {
             case 0:
-              Get.offAll(() => HomePage());
+              Get.offAll(() => const HomePage());
               break;
-
             case 1:
               Get.offAll(() => FavouritesPage());
               break;
-
             case 2:
               Get.offAll(() => CartPage());
               break;

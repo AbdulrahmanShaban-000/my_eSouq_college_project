@@ -1,46 +1,21 @@
-/*
-class ProductController extends GetxController {
-  var products = <Map<String, dynamic>>[].obs;
-  var isLoaded = false.obs;
-
-  @override
-  void onInit() {
-    super.onInit();
-    if (!isLoaded.value) {
-      loadProducts();
-      isLoaded.value = true;
-    }
-  }
-}
-*/
-
-
-
 import 'dart:convert';
 import 'package:get/get.dart';
 import 'package:http/http.dart' as http;
 
 class ProductController extends GetxController {
- var products = <Map<String, dynamic>>[].obs;
-  var isLoaded = false.obs;
+  var products = <Map<String, dynamic>>[].obs;
+  var isLoading = true.obs; // يبدأ بـ true لأن التحميل يبدأ فوراً
 
-
-  bool _loaded = false; // 👈 مهم
- @override
+  @override
   void onInit() {
     super.onInit();
-    if (!isLoaded.value) {
-      loadProducts();
-      isLoaded.value = true;
-    }
+    loadProducts();
   }
 
   Future<void> loadProducts() async {
-    if (_loaded) return; // 👈 يمنع إعادة التحميل
+    isLoading.value = true;
 
     try {
-      isLoaded.value = true;
-
       final response = await http.get(
         Uri.parse('https://fakestoreapi.com/products'),
       );
@@ -61,26 +36,20 @@ class ProductController extends GetxController {
                 : 4.0,
           };
         }).toList();
-
-        _loaded = true; // 👈 تم التحميل مرة واحدة فقط
+      } else {
+        Get.snackbar('Error', 'Failed to load products');
       }
     } catch (e) {
-      Get.snackbar('Error', 'Failed to load products');
+      Get.snackbar('Error', 'Check your internet connection');
     } finally {
-      isLoaded.value = false;
+      isLoading.value = false;
     }
   }
 
   String _mapCategory(String category) {
-    if (category.contains('men') || category.contains('women')) {
-      return 'shirts';
-    }
-    if (category.contains('jewelery')) {
-      return 'accessories';
-    }
-    if (category.contains('shoe')) {
-      return 'shoes';
-    }
+    if (category.contains('men') || category.contains('women')) return 'shirts';
+    if (category.contains('jewelery')) return 'accessories';
+    if (category.contains('shoe')) return 'shoes';
     return 'all';
   }
 }

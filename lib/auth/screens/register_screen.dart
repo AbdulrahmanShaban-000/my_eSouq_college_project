@@ -32,28 +32,19 @@ class _RegisterScreenState extends State<RegisterScreen> {
   Future<void> pickImage() async {
     final picker = ImagePicker();
     final picked = await picker.pickImage(source: ImageSource.gallery);
-
     if (picked != null) {
-      setState(() {
-        imageFile = File(picked.path);
-      });
+      setState(() => imageFile = File(picked.path));
     }
   }
-
-  Future<void> register() async {
-    if (!_formKey.currentState!.validate()) return;
+Future<void> register() async {
+    if (!_formKey.currentState!.validate()) {
+      return;
+    }
 
     if (!acceptTerms) {
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(const SnackBar(content: Text("Accept terms first")));
-      return;
-    }
-
-    if (password.text != confirm.text) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text("Passwords do not match")));
+      ).showSnackBar(SnackBar(content: Text('accept_terms_first'.tr)));
       return;
     }
 
@@ -61,16 +52,26 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
     await Future.delayed(const Duration(seconds: 2));
 
+     
     await authController.setUser(
-      name: name.text,
-      phone: phone.text,
-      email: email.text,
+      name: name.text.trim(),
+      phone: phone.text.trim(),
+      email: email.text.trim(),
       image: imageFile?.path ?? '',
     );
 
+   
+    await authController.login();
+
+   
+    await authController.loadUser();
+
     setState(() => isLoading = false);
 
-    Navigator.pop(context);
+    if (!mounted) return;
+
+   
+    Get.offAllNamed('/home');
   }
 
   InputDecoration _input(String label, IconData icon, {Widget? suffix}) {
@@ -79,13 +80,24 @@ class _RegisterScreenState extends State<RegisterScreen> {
       prefixIcon: Icon(icon, color: Colors.white70),
       filled: true,
       suffixIcon: suffix,
-      fillColor: Colors.white.withOpacity(0.08),
+      fillColor: Colors.white.withValues(alpha: 0.08),
       labelStyle: const TextStyle(color: Colors.white70),
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(14),
         borderSide: BorderSide.none,
       ),
+      errorStyle: const TextStyle(color: Colors.orangeAccent),
     );
+  }
+
+  @override
+  void dispose() {
+    name.dispose();
+    phone.dispose();
+    email.dispose();
+    password.dispose();
+    confirm.dispose();
+    super.dispose();
   }
 
   @override
@@ -104,14 +116,13 @@ class _RegisterScreenState extends State<RegisterScreen> {
               constraints: const BoxConstraints(maxWidth: 420),
               padding: const EdgeInsets.all(24),
               decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.08),
+                color: Colors.white.withValues(alpha: 0.08),
                 borderRadius: BorderRadius.circular(24),
-                border: Border.all(color: Colors.white.withOpacity(0.15)),
+                border: Border.all(color: Colors.white.withValues(alpha: 0.15)),
               ),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  // صورة المستخدم
                   GestureDetector(
                     onTap: pickImage,
                     child: Stack(
@@ -119,15 +130,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         CircleAvatar(
                           radius: 45,
                           backgroundColor: Colors.white24,
-                          backgroundImage: imageFile != null
-                              ? FileImage(imageFile!)
-                              : null,
+                          backgroundImage:
+                              imageFile != null ? FileImage(imageFile!) : null,
                           child: imageFile == null
-                              ? const Icon(
-                                  Icons.person,
-                                  size: 40,
-                                  color: Colors.white,
-                                )
+                              ? const Icon(Icons.person, size: 40, color: Colors.white)
                               : null,
                         ),
                         Positioned(
@@ -139,30 +145,22 @@ class _RegisterScreenState extends State<RegisterScreen> {
                               color: Colors.blueAccent,
                               shape: BoxShape.circle,
                             ),
-                            child: const Icon(
-                              Icons.camera_alt,
-                              size: 16,
-                              color: Colors.white,
-                            ),
+                            child: const Icon(Icons.camera_alt, size: 16, color: Colors.white),
                           ),
                         ),
                       ],
                     ),
                   ),
-
                   const SizedBox(height: 15),
-
                   Text(
-                    "create_account".tr,
+                    'create_account'.tr,
                     style: const TextStyle(
                       fontSize: 26,
                       fontWeight: FontWeight.bold,
                       color: Colors.white,
                     ),
                   ),
-
                   const SizedBox(height: 25),
-
                   Form(
                     key: _formKey,
                     child: Column(
@@ -170,40 +168,38 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         TextFormField(
                           controller: name,
                           style: const TextStyle(color: Colors.white),
-                          decoration: _input("name".tr, Icons.person),
+                          decoration: _input('name'.tr, Icons.person),
                           validator: (v) =>
-                              (v == null || v.isEmpty) ? "Required" : null,
+                              (v == null || v.trim().isEmpty) ? 'Required' : null,
                         ),
-
                         const SizedBox(height: 12),
-
                         TextFormField(
                           controller: phone,
                           keyboardType: TextInputType.phone,
                           style: const TextStyle(color: Colors.white),
-                          decoration: _input("phone".tr, Icons.phone),
+                          decoration: _input('phone'.tr, Icons.phone),
                           validator: (v) =>
-                              (v == null || v.isEmpty) ? "Required" : null,
+                              (v == null || v.trim().isEmpty) ? 'Required' : null,
                         ),
-
                         const SizedBox(height: 12),
-
                         TextFormField(
                           controller: email,
+                          keyboardType: TextInputType.emailAddress,
                           style: const TextStyle(color: Colors.white),
-                          decoration: _input("email".tr, Icons.email),
-                          validator: (v) =>
-                              (v == null || v.isEmpty) ? "Required" : null,
+                          decoration: _input('email'.tr, Icons.email),
+                          validator: (v) {
+                            if (v == null || v.trim().isEmpty) return 'Required';
+                            if (!GetUtils.isEmail(v.trim())) return 'Invalid email';
+                            return null;
+                          },
                         ),
-
                         const SizedBox(height: 12),
-
                         TextFormField(
                           controller: password,
                           obscureText: obscurePassword,
                           style: const TextStyle(color: Colors.white),
                           decoration: _input(
-                            "password".tr,
+                            'password'.tr,
                             Icons.lock,
                             suffix: IconButton(
                               icon: Icon(
@@ -217,18 +213,19 @@ class _RegisterScreenState extends State<RegisterScreen> {
                               ),
                             ),
                           ),
-                          validator: (v) =>
-                              (v == null || v.isEmpty) ? "Required" : null,
+                          validator: (v) {
+                            if (v == null || v.isEmpty) return 'Required';
+                            if (v.length < 6) return 'Min 6 characters';
+                            return null;
+                          },
                         ),
-
                         const SizedBox(height: 12),
-
                         TextFormField(
                           controller: confirm,
                           obscureText: obscureConfirm,
                           style: const TextStyle(color: Colors.white),
                           decoration: _input(
-                            "password_confirm".tr,
+                            'password_confirm'.tr,
                             Icons.lock,
                             suffix: IconButton(
                               icon: Icon(
@@ -243,18 +240,17 @@ class _RegisterScreenState extends State<RegisterScreen> {
                             ),
                           ),
                           validator: (v) {
-                            if (v == null || v.isEmpty) return "Required";
-                            if (v != password.text) return "Not matched";
+                            if (v == null || v.isEmpty) return 'Required';
+                            if (v != password.text) return 'Not matched';
                             return null;
                           },
                         ),
-
                         const SizedBox(height: 10),
-
                         Row(
                           children: [
                             Checkbox(
                               value: acceptTerms,
+                              activeColor: Colors.blueAccent,
                               onChanged: (v) =>
                                   setState(() => acceptTerms = v ?? false),
                             ),
@@ -266,9 +262,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                             ),
                           ],
                         ),
-
                         const SizedBox(height: 15),
-
                         SizedBox(
                           width: double.infinity,
                           height: 50,
@@ -281,11 +275,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
                               ),
                             ),
                             child: isLoading
-                                ? const CircularProgressIndicator(
-                                    color: Colors.white,
-                                  )
+                                ? const CircularProgressIndicator(color: Colors.white)
                                 : Text(
-                                    "create_account".tr,
+                                    'create_account'.tr,
                                     style: const TextStyle(
                                       color: Colors.white,
                                       fontSize: 20,

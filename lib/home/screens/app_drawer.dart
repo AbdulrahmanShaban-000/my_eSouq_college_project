@@ -24,18 +24,14 @@ class AppDrawer extends StatelessWidget {
         child: SafeArea(
           child: Column(
             children: [
-              // ================= HEADER =================
               Container(
                 width: double.infinity,
                 margin: const EdgeInsets.all(16),
-                padding: const EdgeInsets.symmetric(
-                  vertical: 25,
-                  horizontal: 20,
-                ),
+                padding: const EdgeInsets.symmetric(vertical: 25, horizontal: 20),
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(24),
-                  color: Colors.white.withOpacity(0.08),
-                  border: Border.all(color: Colors.white.withOpacity(0.1)),
+                  color: Colors.white.withValues(alpha: 0.08),
+                  border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
                 ),
                 child: Obx(() {
                   final name = authController.name.value;
@@ -43,13 +39,12 @@ class AppDrawer extends StatelessWidget {
 
                   return Column(
                     children: [
-                      // صورة المستخدم
                       Container(
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
                           boxShadow: [
                             BoxShadow(
-                              color: Colors.black.withOpacity(0.25),
+                              color: Colors.black.withValues(alpha: 0.25),
                               blurRadius: 15,
                               offset: const Offset(0, 6),
                             ),
@@ -58,23 +53,17 @@ class AppDrawer extends StatelessWidget {
                         child: CircleAvatar(
                           radius: 60,
                           backgroundColor: Colors.white24,
-                          backgroundImage: image.isNotEmpty
-                              ? FileImage(File(image))
-                              : null,
+                          backgroundImage:
+                              image.isNotEmpty ? FileImage(File(image)) : null,
                           child: image.isEmpty
-                              ? const Icon(
-                                  Icons.person_rounded,
-                                  size: 42,
-                                  color: Colors.white,
-                                )
+                              ? const Icon(Icons.person_rounded,
+                                  size: 42, color: Colors.white)
                               : null,
                         ),
                       ),
-
                       const SizedBox(height: 14),
-
                       Text(
-                        "hi".tr + (name.isEmpty ? " Guest" : " $name"),
+                        '${'hi'.tr} ${name.isEmpty ? 'guest'.tr : name}',
                         style: const TextStyle(
                           color: Colors.white,
                           fontSize: 20,
@@ -82,13 +71,11 @@ class AppDrawer extends StatelessWidget {
                           letterSpacing: 0.5,
                         ),
                       ),
-
                       const SizedBox(height: 6),
-
                       Text(
-                        "my_esouq".tr,
+                        'my_esouq'.tr,
                         style: TextStyle(
-                          color: Colors.white.withOpacity(0.75),
+                          color: Colors.white.withValues(alpha: 0.75),
                           fontSize: 14,
                         ),
                       ),
@@ -100,14 +87,13 @@ class AppDrawer extends StatelessWidget {
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 20),
                 child: Divider(
-                  color: Colors.white.withOpacity(0.12),
+                  color: Colors.white.withValues(alpha: 0.12),
                   thickness: 1,
                 ),
               ),
 
               const SizedBox(height: 10),
 
-              // ================= ITEMS =================
               _item(Icons.home_rounded, 'home'.tr, '/home'),
               _item(Icons.shopping_cart_rounded, 'cart'.tr, '/cart'),
               _item(Icons.person_rounded, 'profile'.tr, '/profile'),
@@ -115,34 +101,31 @@ class AppDrawer extends StatelessWidget {
 
               const Spacer(),
 
-              // ================= LOGOUT =================
               Padding(
                 padding: const EdgeInsets.fromLTRB(18, 0, 18, 30),
                 child: InkWell(
                   borderRadius: BorderRadius.circular(18),
                   onTap: () async {
                     Get.back();
-                    authController.logout();
+                    await authController.logout();
                     Get.offAll(() => const LoginScreen());
                   },
-                  child: AnimatedContainer(
-                    duration: const Duration(milliseconds: 250),
+                  child: Container(
                     padding: const EdgeInsets.symmetric(vertical: 16),
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(18),
-                      color: Colors.redAccent.withOpacity(0.12),
+                      color: Colors.redAccent.withValues(alpha: 0.12),
                       border: Border.all(
-                        color: Colors.redAccent.withOpacity(0.35),
-                      ),
+                          color: Colors.redAccent.withValues(alpha: 0.35)),
                     ),
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Icon(Icons.logout, color: Colors.redAccent),
-                        SizedBox(width: 10),
+                        const Icon(Icons.logout, color: Colors.redAccent),
+                        const SizedBox(width: 10),
                         Text(
-                          "logout".tr,
-                          style: TextStyle(
+                          'logout'.tr,
+                          style: const TextStyle(
                             color: Colors.redAccent,
                             fontSize: 20,
                             fontWeight: FontWeight.w600,
@@ -178,10 +161,7 @@ class AppDrawer extends StatelessWidget {
             decoration: BoxDecoration(borderRadius: BorderRadius.circular(16)),
             child: ListTile(
               contentPadding: EdgeInsets.zero,
-
-              // ✅ لون أيقونات الـ Drawer أبيض
               leading: Icon(icon, color: Colors.white, size: 26),
-
               title: Text(
                 title,
                 style: const TextStyle(
@@ -190,12 +170,8 @@ class AppDrawer extends StatelessWidget {
                   fontWeight: FontWeight.w500,
                 ),
               ),
-
-              trailing: const Icon(
-                Icons.arrow_forward_ios_rounded,
-                color: Colors.white54,
-                size: 16,
-              ),
+              trailing: const Icon(Icons.arrow_forward_ios_rounded,
+                  color: Colors.white54, size: 16),
             ),
           ),
         ),

@@ -3,11 +3,10 @@ import 'package:my_esouq/services/storage_service.dart';
 
 class AuthController extends GetxController {
   var isLoggedIn = false.obs;
-
-  var name = "".obs;
-  var phone = "".obs;
-  var email = "".obs;
-  var imagePath = "".obs;
+  var name = ''.obs;
+  var phone = ''.obs;
+  var email = ''.obs;
+  var imagePath = ''.obs;
 
   @override
   void onInit() {
@@ -24,7 +23,6 @@ class AuthController extends GetxController {
     isLoggedIn.value = await StorageService.isLoggedIn();
   }
 
-
   Future<void> setUser({
     required String name,
     required String phone,
@@ -36,7 +34,7 @@ class AuthController extends GetxController {
     this.email.value = email;
     imagePath.value = image;
 
-  await StorageService.saveUser(
+    await StorageService.saveUser(
       name: name,
       phone: phone,
       email: email,
@@ -44,7 +42,6 @@ class AuthController extends GetxController {
     );
   }
 
-  /// ✅ تحميل المستخدم
   Future<void> loadUser() async {
     name.value = await StorageService.getName();
     phone.value = await StorageService.getPhone();
@@ -58,7 +55,9 @@ class AuthController extends GetxController {
   }
 
   Future<void> logout() async {
+     final lang = await StorageService.getLanguage();
     await StorageService.logout();
+    await StorageService.setLanguage(lang);  
 
     isLoggedIn.value = false;
     name.value = '';

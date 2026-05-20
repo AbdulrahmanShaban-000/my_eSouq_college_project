@@ -7,7 +7,6 @@ class ProductSearchDelegate extends SearchDelegate {
 
   ProductSearchDelegate(this.products);
 
-  // 1. تخصيص ألوان شريط البحث العلوي
   @override
   ThemeData appBarTheme(BuildContext context) {
     return ThemeData(
@@ -55,9 +54,10 @@ class ProductSearchDelegate extends SearchDelegate {
     final suggestionList = query.isEmpty
         ? []
         : products.where((p) {
-            return p['name'].toString().toLowerCase().contains(
-              query.toLowerCase(),
-            );
+            return p['name']
+                .toString()
+                .toLowerCase()
+                .contains(query.toLowerCase());
           }).toList();
 
     return Container(
@@ -81,12 +81,11 @@ class ProductSearchDelegate extends SearchDelegate {
     );
   }
 
-  // تصميم كرت المنتج بشكل احترافي
   Widget _buildProductCard(Map<String, dynamic> product) {
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.05),
+        color: Colors.white.withValues(alpha: 0.05),
         borderRadius: BorderRadius.circular(15),
         border: Border.all(color: Colors.white10),
       ),
@@ -105,10 +104,7 @@ class ProductSearchDelegate extends SearchDelegate {
         ),
         title: Text(
           product['name'],
-          style: const TextStyle(
-            color: Colors.white,
-            fontWeight: FontWeight.bold,
-          ),
+          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
         ),
         subtitle: Padding(
           padding: const EdgeInsets.only(top: 4),
@@ -120,23 +116,19 @@ class ProductSearchDelegate extends SearchDelegate {
             ),
           ),
         ),
-        trailing: const Icon(
-          Icons.arrow_forward_ios,
-          color: Colors.white24,
-          size: 16,
-        ),
+        trailing: const Icon(Icons.arrow_forward_ios,
+            color: Colors.white24, size: 16),
         onTap: () => Get.to(() => ProductDetailsPage(product: product)),
       ),
     );
   }
 
-  // واجهة عند عدم وجود نتائج
   Widget _buildNoResults() {
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.search_off, size: 80, color: Colors.white24),
+          const Icon(Icons.search_off, size: 80, color: Colors.white24),
           const SizedBox(height: 16),
           Text(
             'no_results_found'.tr,

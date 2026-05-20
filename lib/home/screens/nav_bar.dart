@@ -1,8 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:my_esouq/home/screens/cart_page.dart';
-import 'package:my_esouq/home/screens/home_page.dart';
-import 'package:my_esouq/home/screens/profile_page.dart';
 
 class NavBar extends StatelessWidget {
   final int currentIndex;
@@ -19,24 +16,12 @@ class NavBar extends StatelessWidget {
       unselectedItemColor: Colors.white54,
       currentIndex: currentIndex,
       onTap: onTap,
-
       items: [
         BottomNavigationBarItem(icon: const Icon(Icons.home), label: 'home'.tr),
-        BottomNavigationBarItem(
-          icon: const Icon(Icons.favorite),
-          label: 'favourites'.tr,
-        ),
-        BottomNavigationBarItem(
-          icon: const Icon(Icons.shopping_cart),
-          label: 'cart'.tr,
-        ),
-        BottomNavigationBarItem(
-          icon: const Icon(Icons.person),
-          label: 'profile'.tr,
-        ),
+        BottomNavigationBarItem(icon: const Icon(Icons.favorite), label: 'favourites'.tr),
+        BottomNavigationBarItem(icon: const Icon(Icons.shopping_cart), label: 'cart'.tr),
+        BottomNavigationBarItem(icon: const Icon(Icons.person), label: 'profile'.tr),
       ],
     );
   }
 }
-
-final List<Widget> pages = [HomePage(), CartPage(), ProfilePage()];

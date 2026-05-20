@@ -74,6 +74,16 @@ class MyLocale implements Translations {
       'shop_now': 'Shop Now',
       'buy_now': 'Buy Now',
       'add_to_cart': 'Add to Cart',
+      // ================= Checking out =================
+      'check_out': 'Checkout',
+      'choose_payment': 'Choose Payment Method',
+      'payment': 'Payment',
+      'sequrity_code': 'Security Code',
+      'promo_code': 'Or Promo Code',
+      'total_': 'Total',
+      'enter_sequrity_code': 'Enter Security Code',
+      'enter_promo_code': 'Enter Promo Code',
+      'make_payment': 'Make Payment',
     },
 
     // ================= ARABIC =================
@@ -146,6 +156,16 @@ class MyLocale implements Translations {
       'shop_now': 'تسوق الآن',
       'buy_now': 'اشتر الآن',
       'add_to_cart': 'أضف إلى السلة',
+      // ================= Checking out =================
+      'check_out': 'الدفع',
+      'choose_payment': 'اختر طريقة الدفع',
+      'payment': 'الدفع',
+      'sequrity_code': 'رمز الأمان',
+      'promo_code': 'أو رمز العرض',
+      'total_': 'المجموع',
+      'enter_sequrity_code': 'أدخل رمز الأمان',
+      'enter_promo_code': 'أدخل رمز العرض',
+      'make_payment': 'قم بالدفع',
     },
   };
 }

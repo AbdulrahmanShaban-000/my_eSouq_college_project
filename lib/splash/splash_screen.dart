@@ -24,34 +24,27 @@ class _SplashScreenState extends State<SplashScreen>
   void initState() {
     super.initState();
 
-    // 🎬 Animations
     _controller = AnimationController(
       vsync: this,
       duration: const Duration(seconds: 2),
     );
 
-    _fadeAnimation = Tween<double>(
-      begin: 0,
-      end: 1,
-    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeIn));
+    _fadeAnimation = Tween<double>(begin: 0, end: 1).animate(
+      CurvedAnimation(parent: _controller, curve: Curves.easeIn),
+    );
 
-    _scaleAnimation = Tween<double>(
-      begin: 0.8,
-      end: 1,
-    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeOutBack));
+    _scaleAnimation = Tween<double>(begin: 0.8, end: 1).animate(
+      CurvedAnimation(parent: _controller, curve: Curves.easeOutBack),
+    );
 
     _controller.forward();
-
     _goNext();
   }
 
   Future<void> _goNext() async {
     await Future.delayed(const Duration(seconds: 3));
+    await authController.loadUser();
 
-   
-   await authController.loadUser();
-
-   
     if (authController.isLoggedIn.value) {
       Get.offAll(() => const HomePage());
     } else {
@@ -90,10 +83,10 @@ class _SplashScreenState extends State<SplashScreen>
                       Container(
                         padding: const EdgeInsets.all(25),
                         decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.08),
+                          color: Colors.white.withValues(alpha: 0.08),
                           shape: BoxShape.circle,
                           border: Border.all(
-                            color: Colors.white.withOpacity(0.15),
+                            color: Colors.white.withValues(alpha: 0.15),
                           ),
                         ),
                         child: const Icon(
@@ -102,9 +95,7 @@ class _SplashScreenState extends State<SplashScreen>
                           color: Colors.white,
                         ),
                       ),
-
                       const SizedBox(height: 20),
-
                       Text(
                         'my_esouq'.tr,
                         style: const TextStyle(
@@ -114,16 +105,12 @@ class _SplashScreenState extends State<SplashScreen>
                           letterSpacing: 1.5,
                         ),
                       ),
-
                       const SizedBox(height: 10),
-
                       const Text(
                         'Best Shopping Experience',
                         style: TextStyle(color: Colors.white70, fontSize: 14),
                       ),
-
                       const SizedBox(height: 30),
-
                       const CircularProgressIndicator(
                         color: Colors.white,
                         strokeWidth: 2,

@@ -11,22 +11,24 @@ class FavouriteController extends GetxController {
         'Already Added',
         '${product['name']} is already in favourites',
       );
-
       return;
     }
 
     favourites.add(product);
-
     Get.snackbar('Added', '${product['name']} added to favourites');
   }
 
   void removeFavourite(int id) {
     favourites.removeWhere((item) => item['id'] == id);
-
     Get.snackbar('Removed', 'Item removed from favourites');
   }
 
   bool isFavourite(int id) {
     return favourites.any((item) => item['id'] == id);
+  }
+
+  void clearAll() {
+    favourites.clear();
+    Get.snackbar('Cleared', 'All favourites removed');
   }
 }
