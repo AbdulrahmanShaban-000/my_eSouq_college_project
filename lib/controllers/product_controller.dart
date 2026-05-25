@@ -1,10 +1,15 @@
-import 'dart:convert';
+import 'package:dio/dio.dart';
 import 'package:get/get.dart';
-import 'package:http/http.dart' as http;
+import 'package:my_esouq/core/api/dio_consumer.dart';
+import 'package:my_esouq/core/api/end_points.dart';
+import 'package:my_esouq/core/errors/exception.dart';
+import 'package:my_esouq/core/api/api_consumer.dart';
 
 class ProductController extends GetxController {
+  final ApiConsumer _api = DioConsumer(Dio());
+
   var products = <Map<String, dynamic>>[].obs;
-  var isLoading = true.obs; // يبدأ بـ true لأن التحميل يبدأ فوراً
+  var isLoading = true.obs;
 
   @override
   void onInit() {
@@ -16,31 +21,24 @@ class ProductController extends GetxController {
     isLoading.value = true;
 
     try {
-      final response = await http.get(
-        Uri.parse('https://fakestoreapi.com/products'),
-      );
+      final data = await _api.get(EndPoints.products);
+      final List listData = data is List ? data : (data as List).toList();
 
-      if (response.statusCode == 200) {
-        final List data = jsonDecode(response.body);
-
-        products.value = data.map<Map<String, dynamic>>((product) {
-          return {
-            'id': product['id'],
-            'name': product['title'],
-            'description': product['description'],
-            'price': '\$${product['price']}',
-            'category': _mapCategory(product['category']),
-            'image': product['image'],
-            'rating': product['rating'] != null
-                ? product['rating']['rate']
-                : 4.0,
-          };
-        }).toList();
-      } else {
-        Get.snackbar('Error', 'Failed to load products');
-      }
-    } catch (e) {
-      Get.snackbar('Error', 'Check your internet connection');
+      products.value = listData.map<Map<String, dynamic>>((product) {
+        return {
+          'id': product['id'],
+          'name': product['title'],
+          'description': product['description'],
+          'price': '\$${product['price']}',
+          'category': _mapCategory(product['category']),
+          'image': product['image'],
+          'rating': product['rating'] != null ? product['rating']['rate'] : 4.0,
+        };
+      }).toList();
+    } on ServerException catch (e) {
+      Get.snackbar('Error', e.errorModel.errorMessage);
+    } catch (_) {
+      Get.snackbar('Error', 'Failed to load products');
     } finally {
       isLoading.value = false;
     }

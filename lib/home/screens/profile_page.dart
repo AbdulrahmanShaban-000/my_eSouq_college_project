@@ -1,4 +1,5 @@
 import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:my_esouq/controllers/auth_controller.dart';
@@ -9,9 +10,17 @@ import 'package:my_esouq/home/screens/cart_page.dart';
 import 'package:my_esouq/home/screens/favourites_page.dart';
 import 'package:my_esouq/home/screens/home_page.dart';
 import 'package:my_esouq/home/screens/nav_bar.dart';
+import 'package:my_esouq/home/screens/profile_edit_page.dart';
 
-class ProfilePage extends StatelessWidget {
+class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
+
+  @override
+  State<ProfilePage> createState() => _ProfilePageState();
+}
+
+class _ProfilePageState extends State<ProfilePage> {
+  bool isEnabled = true;
 
   @override
   Widget build(BuildContext context) {
@@ -19,42 +28,58 @@ class ProfilePage extends StatelessWidget {
     final RecentOrdersController recentOrdersController =
         Get.find<RecentOrdersController>();
 
+    // استخراج خصائص الثيم الحالي
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
     return Scaffold(
       drawer: AppDrawer(),
+      backgroundColor: theme.colorScheme.surface,
       body: Container(
-        decoration: const BoxDecoration(
+        decoration: BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
-            colors: [Color(0xFF0F2027), Color(0xFF203A43), Color(0xFF2C5364)],
+            colors: isDark
+                ? [
+                    const Color(0xFF0F2027),
+                    const Color(0xFF203A43),
+                    const Color(0xFF2C5364),
+                  ]
+                : [Colors.grey[50]!, Colors.grey[200]!, Colors.grey[300]!],
           ),
         ),
         child: CustomScrollView(
           slivers: [
             SliverAppBar(
-              iconTheme: const IconThemeData(color: Colors.white),
+              iconTheme: IconThemeData(color: theme.colorScheme.onSurface),
               expandedHeight: 120,
               floating: true,
               pinned: true,
-              backgroundColor: const Color(0xFF0F2027),
+              backgroundColor:
+                  Colors.transparent, // شفافة ليتناسب التدرج اللوني بسلاسة
               elevation: 0,
               centerTitle: true,
               title: Text(
                 'profile'.tr,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 22,
                   fontWeight: FontWeight.bold,
-                  color: Colors.white,
+                  color: theme.colorScheme.onSurface,
                 ),
               ),
               actions: [
                 IconButton(
                   onPressed: () {
-                    final newLang =
-                        Get.locale?.languageCode == 'en' ? 'ar' : 'en';
+                    final newLang = Get.locale?.languageCode == 'en'
+                        ? 'ar'
+                        : 'en';
                     Get.updateLocale(Locale(newLang));
                   },
-                  icon: const Icon(Icons.language, color: Colors.white),
+                  icon: Icon(
+                    Icons.language,
+                    color: theme.colorScheme.onSurface,
+                  ),
                 ),
               ],
             ),
@@ -67,20 +92,30 @@ class ProfilePage extends StatelessWidget {
                   return Container(
                     padding: const EdgeInsets.all(20),
                     decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.05),
+                      color: theme.colorScheme.onSurface.withValues(
+                        alpha: 0.05,
+                      ),
                       borderRadius: BorderRadius.circular(20),
-                      border: Border.all(color: Colors.white10),
+                      border: Border.all(
+                        color: theme.colorScheme.onSurface.withValues(
+                          alpha: 0.08,
+                        ),
+                      ),
                     ),
                     child: Row(
                       children: [
                         CircleAvatar(
                           radius: 35,
+                          backgroundColor: theme.colorScheme.primary.withValues(
+                            alpha: 0.2,
+                          ),
                           backgroundImage:
                               authController.imagePath.value.isNotEmpty
                               ? FileImage(File(authController.imagePath.value))
                               : const NetworkImage(
                                       'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150',
-                                    ) as ImageProvider,
+                                    )
+                                    as ImageProvider,
                         ),
                         const SizedBox(width: 16),
                         Expanded(
@@ -91,10 +126,10 @@ class ProfilePage extends StatelessWidget {
                                 authController.name.value.isNotEmpty
                                     ? authController.name.value
                                     : 'User',
-                                style: const TextStyle(
+                                style: TextStyle(
                                   fontSize: 22,
                                   fontWeight: FontWeight.bold,
-                                  color: Colors.white,
+                                  color: theme.colorScheme.onSurface,
                                 ),
                               ),
                               const SizedBox(height: 4),
@@ -102,15 +137,22 @@ class ProfilePage extends StatelessWidget {
                                 authController.email.value.isNotEmpty
                                     ? authController.email.value
                                     : 'No email',
-                                style: const TextStyle(color: Colors.white70),
+                                style: TextStyle(
+                                  color: theme.colorScheme.onSurface.withValues(
+                                    alpha: 0.6,
+                                  ),
+                                ),
                               ),
                             ],
                           ),
                         ),
                         IconButton(
                           onPressed: () =>
-                              Get.snackbar('Edit Profile', 'Coming soon'),
-                          icon: const Icon(Icons.edit, color: Colors.white),
+                              Get.to(() => const ProfileEditPage()),
+                          icon: Icon(
+                            Icons.edit,
+                            color: theme.colorScheme.primary,
+                          ),
                         ),
                       ],
                     ),
@@ -125,9 +167,11 @@ class ProfilePage extends StatelessWidget {
                 margin: const EdgeInsets.symmetric(horizontal: 16),
                 padding: const EdgeInsets.all(20),
                 decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.05),
+                  color: theme.colorScheme.onSurface.withValues(alpha: 0.05),
                   borderRadius: BorderRadius.circular(20),
-                  border: Border.all(color: Colors.white10),
+                  border: Border.all(
+                    color: theme.colorScheme.onSurface.withValues(alpha: 0.08),
+                  ),
                 ),
                 child: Obx(() {
                   return Column(
@@ -135,34 +179,54 @@ class ProfilePage extends StatelessWidget {
                     children: [
                       Text(
                         'account_info'.tr,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 20,
                           fontWeight: FontWeight.bold,
-                          color: Colors.white,
+                          color: theme.colorScheme.onSurface,
                         ),
                       ),
                       const SizedBox(height: 12),
                       ListTile(
-                        leading: const Icon(Icons.phone, color: Colors.blueAccent),
+                        contentPadding: EdgeInsets.zero,
+                        leading: Icon(
+                          Icons.phone,
+                          color: theme.colorScheme.primary,
+                        ),
                         title: Text(
                           authController.phone.value.isNotEmpty
                               ? authController.phone.value
                               : 'No phone',
-                          style: const TextStyle(color: Colors.white),
+                          style: TextStyle(color: theme.colorScheme.onSurface),
                         ),
-                        subtitle: Text('phone'.tr,
-                            style: const TextStyle(color: Colors.white70)),
+                        subtitle: Text(
+                          'phone'.tr,
+                          style: TextStyle(
+                            color: theme.colorScheme.onSurface.withValues(
+                              alpha: 0.6,
+                            ),
+                          ),
+                        ),
                       ),
                       ListTile(
-                        leading: const Icon(Icons.email, color: Colors.blueAccent),
+                        contentPadding: EdgeInsets.zero,
+                        leading: Icon(
+                          Icons.email,
+                          color: theme.colorScheme.primary,
+                        ),
                         title: Text(
                           authController.email.value.isNotEmpty
                               ? authController.email.value
                               : 'No email',
-                          style: const TextStyle(color: Colors.white),
+                          style: TextStyle(color: theme.colorScheme.onSurface),
                         ),
-                        subtitle: Text('email'.tr,
-                            style: const TextStyle(color: Colors.white70)),
+                        subtitle: Text(
+                          'email'.tr,
+                          style: TextStyle(
+                            color: theme.colorScheme.onSurface.withValues(
+                              alpha: 0.6,
+                            ),
+                          ),
+                        ),
                       ),
                     ],
                   );
@@ -176,10 +240,10 @@ class ProfilePage extends StatelessWidget {
                 padding: const EdgeInsets.all(16),
                 child: Text(
                   'orders'.tr,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 22,
                     fontWeight: FontWeight.bold,
-                    color: Colors.white,
+                    color: theme.colorScheme.onSurface,
                   ),
                 ),
               ),
@@ -190,21 +254,41 @@ class ProfilePage extends StatelessWidget {
               if (recentOrdersController.recentOrders.isEmpty) {
                 return SliverToBoxAdapter(
                   child: Container(
-                    margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                    padding: const EdgeInsets.symmetric(vertical: 30, horizontal: 20),
-                    decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.05),
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: Colors.white10),
+                    margin: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 10,
                     ),
-                    child: const Column(
+                    padding: const EdgeInsets.symmetric(
+                      vertical: 30,
+                      horizontal: 20,
+                    ),
+                    decoration: BoxDecoration(
+                      color: theme.colorScheme.onSurface.withValues(
+                        alpha: 0.05,
+                      ),
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(
+                        color: theme.colorScheme.onSurface.withValues(
+                          alpha: 0.08,
+                        ),
+                      ),
+                    ),
+                    child: Column(
                       children: [
-                        Icon(Icons.receipt_long_outlined, color: Colors.white54, size: 50),
-                        SizedBox(height: 12),
+                        Icon(
+                          Icons.receipt_long_outlined,
+                          color: theme.colorScheme.onSurface.withValues(
+                            alpha: 0.4,
+                          ),
+                          size: 50,
+                        ),
+                        const SizedBox(height: 12),
                         Text(
                           'No Recent Orders',
                           style: TextStyle(
-                            color: Colors.white70,
+                            color: theme.colorScheme.onSurface.withValues(
+                              alpha: 0.7,
+                            ),
                             fontSize: 18,
                             fontWeight: FontWeight.w500,
                           ),
@@ -216,61 +300,78 @@ class ProfilePage extends StatelessWidget {
               }
 
               return SliverList(
-                delegate: SliverChildBuilderDelegate(
-                  (context, index) {
-                    final product = recentOrdersController.recentOrders[index];
+                delegate: SliverChildBuilderDelegate((context, index) {
+                  final product = recentOrdersController.recentOrders[index];
 
-                    return Container(
-                      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-                      padding: const EdgeInsets.all(16),
-                      decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: 0.05),
-                        borderRadius: BorderRadius.circular(16),
-                        border: Border.all(color: Colors.white10),
+                  return Container(
+                    margin: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 6,
+                    ),
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: theme.colorScheme.onSurface.withValues(
+                        alpha: 0.05,
                       ),
-                      child: Row(
-                        children: [
-                          ClipRRect(
-                            borderRadius: BorderRadius.circular(12),
-                            child: Image.network(
-                              product['image'],
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(
+                        color: theme.colorScheme.onSurface.withValues(
+                          alpha: 0.08,
+                        ),
+                      ),
+                    ),
+                    child: Row(
+                      children: [
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(12),
+                          child: Image.network(
+                            product['image'],
+                            width: 60,
+                            height: 60,
+                            fit: BoxFit.cover,
+                            errorBuilder: (c, e, s) => Container(
                               width: 60,
                               height: 60,
-                              fit: BoxFit.cover,
-                              errorBuilder: (c, e, s) => Container(
-                                width: 60,
-                                height: 60,
-                                color: Colors.white12,
-                                child: const Icon(Icons.broken_image, color: Colors.white38),
+                              color: theme.colorScheme.onSurface.withValues(
+                                alpha: 0.1,
+                              ),
+                              child: Icon(
+                                Icons.broken_image,
+                                color: theme.colorScheme.onSurface.withValues(
+                                  alpha: 0.4,
+                                ),
                               ),
                             ),
                           ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  product['name'],
-                                  style: const TextStyle(
-                                    color: Colors.white,
-                                    fontWeight: FontWeight.bold,
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                product['name'],
+                                style: TextStyle(
+                                  color: theme.colorScheme.onSurface,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                product['price'],
+                                style: TextStyle(
+                                  color: theme.colorScheme.onSurface.withValues(
+                                    alpha: 0.6,
                                   ),
                                 ),
-                                const SizedBox(height: 4),
-                                Text(
-                                  product['price'],
-                                  style: const TextStyle(color: Colors.white70),
-                                ),
-                              ],
-                            ),
+                              ),
+                            ],
                           ),
-                        ],
-                      ),
-                    );
-                  },
-                  childCount: recentOrdersController.recentOrders.length,
-                ),
+                        ),
+                      ],
+                    ),
+                  );
+                }, childCount: recentOrdersController.recentOrders.length),
               );
             }),
 
@@ -280,31 +381,61 @@ class ProfilePage extends StatelessWidget {
                 padding: const EdgeInsets.all(16),
                 child: Text(
                   'settings'.tr,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 22,
                     fontWeight: FontWeight.bold,
-                    color: Colors.white,
+                    color: theme.colorScheme.onSurface,
                   ),
                 ),
               ),
             ),
 
             SliverToBoxAdapter(
-              child: Card(
+              child: Container(
                 margin: const EdgeInsets.symmetric(horizontal: 16),
-                color: Colors.white.withValues(alpha: 0.05),
+                decoration: BoxDecoration(
+                  color: theme.colorScheme.onSurface.withValues(alpha: 0.05),
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(
+                    color: theme.colorScheme.onSurface.withValues(alpha: 0.08),
+                  ),
+                ),
                 child: Column(
                   children: [
                     ListTile(
-                      leading: const Icon(Icons.notifications, color: Colors.blueAccent),
-                      title: Text('notifications'.tr,
-                          style: const TextStyle(color: Colors.white)),
-                      trailing: Switch(value: true, onChanged: (v) {}),
+                      leading: Icon(
+                        Icons.notifications,
+                        color: theme.colorScheme.primary,
+                      ),
+                      title: Text(
+                        'notifications'.tr,
+                        style: TextStyle(color: theme.colorScheme.onSurface),
+                      ),
+                      trailing: Switch(
+                        value: isEnabled,
+                        activeColor: theme.colorScheme.primary,
+                        onChanged: (value) {
+                          setState(() {
+                            isEnabled = value;
+                          });
+                        },
+                      ),
+                    ),
+                    Divider(
+                      color: theme.colorScheme.onSurface.withValues(
+                        alpha: 0.08,
+                      ),
+                      height: 1,
                     ),
                     ListTile(
-                      leading: const Icon(Icons.logout, color: Colors.redAccent),
-                      title: Text('logout'.tr,
-                          style: const TextStyle(color: Colors.redAccent)),
+                      leading: const Icon(
+                        Icons.logout,
+                        color: Colors.redAccent,
+                      ),
+                      title: Text(
+                        'logout'.tr,
+                        style: const TextStyle(color: Colors.redAccent),
+                      ),
                       onTap: () async {
                         await authController.logout();
                         Get.offAll(() => const LoginScreen());

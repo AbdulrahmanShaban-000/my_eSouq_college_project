@@ -49,6 +49,10 @@ class _HomePageState extends State<HomePage> {
 
   @override
   Widget build(BuildContext context) {
+    // تعريف متغيرات الثيم لتسهيل الاستخدام داخل الـ build
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
     return Scaffold(
       drawer: AppDrawer(),
       bottomNavigationBar: NavBar(
@@ -68,11 +72,18 @@ class _HomePageState extends State<HomePage> {
         },
       ),
       body: Container(
-        decoration: const BoxDecoration(
+        decoration: BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
-            colors: [Color(0xFF0F2027), Color(0xFF203A43), Color(0xFF2C5364)],
+            // تحديد ألوان التدرج بناءً على وضع الثيم الحالي
+            colors: isDark
+                ? [
+                    const Color(0xFF0F2027),
+                    const Color(0xFF203A43),
+                    const Color(0xFF2C5364),
+                  ]
+                : [Colors.grey[50]!, Colors.grey[200]!, Colors.grey[300]!],
           ),
         ),
         child: CustomScrollView(
@@ -82,25 +93,33 @@ class _HomePageState extends State<HomePage> {
               expandedHeight: 180,
               floating: true,
               pinned: true,
-              backgroundColor: const Color(0xFF0F2027),
+              backgroundColor: isDark
+                  ? const Color(0xFF0F2027)
+                  : theme.colorScheme.surface,
               elevation: 0,
-              iconTheme: const IconThemeData(color: Colors.white),
+              iconTheme: IconThemeData(color: theme.colorScheme.onSurface),
               title: Text(
                 'my_esouq'.tr,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 22,
                   fontWeight: FontWeight.bold,
-                  color: Colors.white,
+                  color: theme.colorScheme.onSurface,
                 ),
               ),
               actions: [
                 IconButton(
                   onPressed: toggleLanguage,
-                  icon: const Icon(Icons.language, color: Colors.white),
+                  icon: Icon(
+                    Icons.language,
+                    color: theme.colorScheme.onSurface,
+                  ),
                 ),
                 IconButton(
                   onPressed: () => Get.to(() => CartPage()),
-                  icon: const Icon(Icons.shopping_cart, color: Colors.white),
+                  icon: Icon(
+                    Icons.shopping_cart,
+                    color: theme.colorScheme.onSurface,
+                  ),
                 ),
               ],
               bottom: PreferredSize(
@@ -126,22 +145,26 @@ class _HomePageState extends State<HomePage> {
                       },
                       decoration: InputDecoration(
                         hintText: 'search_products'.tr,
-                        hintStyle: const TextStyle(
+                        hintStyle: TextStyle(
                           fontSize: 17,
-                          color: Colors.white70,
+                          color: theme.colorScheme.onSurface.withValues(
+                            alpha: 0.6,
+                          ),
                         ),
-                        prefixIcon: const Icon(
+                        prefixIcon: Icon(
                           Icons.search,
-                          color: Colors.white,
+                          color: theme.colorScheme.onSurface,
                         ),
                         filled: true,
-                        fillColor: Colors.white.withValues(alpha: 0.1),
+                        fillColor: theme.colorScheme.onSurface.withValues(
+                          alpha: 0.08,
+                        ),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(30),
                           borderSide: BorderSide.none,
                         ),
                       ),
-                      style: const TextStyle(color: Colors.white),
+                      style: TextStyle(color: theme.colorScheme.onSurface),
                     ),
                   ),
                 ),
@@ -158,10 +181,10 @@ class _HomePageState extends State<HomePage> {
                     const SizedBox(height: 10),
                     Text(
                       'categories'.tr,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 22,
                         fontWeight: FontWeight.bold,
-                        color: Colors.white,
+                        color: theme.colorScheme.onSurface,
                       ),
                     ),
                     const SizedBox(height: 12),
@@ -171,6 +194,7 @@ class _HomePageState extends State<HomePage> {
                         scrollDirection: Axis.horizontal,
                         itemCount: categories.length,
                         itemBuilder: (context, index) {
+                          final isSelected = _selectedCategory == index;
                           return GestureDetector(
                             onTap: () =>
                                 setState(() => _selectedCategory = index),
@@ -180,25 +204,42 @@ class _HomePageState extends State<HomePage> {
                                 horizontal: 20,
                               ),
                               decoration: BoxDecoration(
-                                color: _selectedCategory == index
-                                    ? Colors.blueAccent.withValues(alpha: 0.4)
-                                    : Colors.white10,
+                                color: isSelected
+                                    ? theme.colorScheme.primary.withValues(
+                                        alpha: 0.3,
+                                      )
+                                    : theme.colorScheme.onSurface.withValues(
+                                        alpha: 0.05,
+                                      ),
                                 borderRadius: BorderRadius.circular(25),
-                                border: Border.all(color: Colors.white24),
+                                border: Border.all(
+                                  color: isSelected
+                                      ? theme.colorScheme.primary
+                                      : theme.colorScheme.onSurface.withValues(
+                                          alpha: 0.1,
+                                        ),
+                                ),
                               ),
                               child: Center(
                                 child: Row(
                                   children: [
                                     FaIcon(
                                       categories[index]['icon'],
-                                      color: Colors.white,
+                                      color: isSelected
+                                          ? theme.colorScheme.primary
+                                          : theme.colorScheme.onSurface,
                                       size: 18,
                                     ),
                                     const SizedBox(width: 8),
                                     Text(
                                       categories[index]['name'].toString().tr,
-                                      style: const TextStyle(
-                                        color: Colors.white,
+                                      style: TextStyle(
+                                        color: isSelected
+                                            ? theme.colorScheme.primary
+                                            : theme.colorScheme.onSurface,
+                                        fontWeight: isSelected
+                                            ? FontWeight.bold
+                                            : FontWeight.normal,
                                       ),
                                     ),
                                   ],
@@ -212,10 +253,10 @@ class _HomePageState extends State<HomePage> {
                     const SizedBox(height: 20),
                     Text(
                       'featured_products'.tr,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 22,
                         fontWeight: FontWeight.bold,
-                        color: Colors.white,
+                        color: theme.colorScheme.onSurface,
                       ),
                     ),
                   ],
@@ -223,33 +264,38 @@ class _HomePageState extends State<HomePage> {
               ),
             ),
 
-            // PRODUCTS — Obx منفصل لكل حالة
+            // PRODUCTS
             Obx(() {
-              // حالة التحميل
               if (productController.isLoading.value) {
-                return const SliverFillRemaining(
+                return SliverFillRemaining(
                   child: Center(
-                    child: CircularProgressIndicator(color: Colors.white),
+                    child: CircularProgressIndicator(
+                      color: theme.colorScheme.primary,
+                    ),
                   ),
                 );
               }
 
-              // حالة فشل التحميل أو لا يوجد منتجات
               if (productController.products.isEmpty) {
                 return SliverFillRemaining(
                   child: Center(
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        const Icon(
+                        Icon(
                           Icons.wifi_off,
-                          color: Colors.white54,
+                          color: theme.colorScheme.onSurface.withValues(
+                            alpha: 0.5,
+                          ),
                           size: 60,
                         ),
                         const SizedBox(height: 16),
-                        const Text(
+                        Text(
                           'Failed to load products',
-                          style: TextStyle(color: Colors.white70, fontSize: 18),
+                          style: TextStyle(
+                            color: theme.colorScheme.onSurface,
+                            fontSize: 18,
+                          ),
                         ),
                         const SizedBox(height: 20),
                         ElevatedButton.icon(
@@ -257,8 +303,8 @@ class _HomePageState extends State<HomePage> {
                           icon: const Icon(Icons.refresh),
                           label: const Text('Retry'),
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.blueAccent,
-                            foregroundColor: Colors.white,
+                            backgroundColor: theme.colorScheme.primary,
+                            foregroundColor: theme.colorScheme.onPrimary,
                           ),
                         ),
                       ],
@@ -267,7 +313,6 @@ class _HomePageState extends State<HomePage> {
                 );
               }
 
-              // تصفية حسب الفئة
               final filtered = _selectedCategory == 0
                   ? productController.products
                   : productController.products
@@ -283,8 +328,10 @@ class _HomePageState extends State<HomePage> {
                   child: Center(
                     child: Text(
                       'No products in this category',
-                      style: const TextStyle(
-                        color: Colors.white70,
+                      style: TextStyle(
+                        color: theme.colorScheme.onSurface.withValues(
+                          alpha: 0.7,
+                        ),
                         fontSize: 18,
                       ),
                     ),
@@ -304,13 +351,18 @@ class _HomePageState extends State<HomePage> {
                       child: Container(
                         decoration: BoxDecoration(
                           borderRadius: BorderRadius.circular(22),
-                          color: Colors.white.withValues(alpha: 0.06),
-                          border: Border.all(color: Colors.white10),
+                          color: theme.colorScheme.onSurface.withValues(
+                            alpha: 0.05,
+                          ),
+                          border: Border.all(
+                            color: theme.colorScheme.onSurface.withValues(
+                              alpha: 0.08,
+                            ),
+                          ),
                         ),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            /// IMAGE + BADGE
                             Stack(
                               children: [
                                 ClipRRect(
@@ -326,26 +378,28 @@ class _HomePageState extends State<HomePage> {
                                       if (loading == null) return child;
                                       return Container(
                                         height: 140,
-                                        color: Colors.white10,
-                                        child: const Center(
+                                        color: theme.colorScheme.onSurface
+                                            .withValues(alpha: 0.1),
+                                        child: Center(
                                           child: CircularProgressIndicator(
                                             strokeWidth: 2,
+                                            color: theme.colorScheme.primary,
                                           ),
                                         ),
                                       );
                                     },
                                     errorBuilder: (c, e, s) => Container(
                                       height: 140,
-                                      color: Colors.white10,
-                                      child: const Icon(
+                                      color: theme.colorScheme.onSurface
+                                          .withValues(alpha: 0.1),
+                                      child: Icon(
                                         Icons.broken_image,
-                                        color: Colors.white38,
+                                        color: theme.colorScheme.onSurface
+                                            .withValues(alpha: 0.4),
                                       ),
                                     ),
                                   ),
                                 ),
-
-                                /// PRICE BADGE
                                 Positioned(
                                   top: 10,
                                   left: 10,
@@ -370,8 +424,6 @@ class _HomePageState extends State<HomePage> {
                                     ),
                                   ),
                                 ),
-
-                                /// FAVORITE ICON (VISUAL ONLY)
                                 Positioned(
                                   top: 10,
                                   right: 10,
@@ -414,8 +466,6 @@ class _HomePageState extends State<HomePage> {
                                 ),
                               ],
                             ),
-
-                            /// DETAILS
                             Padding(
                               padding: const EdgeInsets.all(10),
                               child: Column(
@@ -425,15 +475,13 @@ class _HomePageState extends State<HomePage> {
                                     product['name'],
                                     maxLines: 1,
                                     overflow: TextOverflow.ellipsis,
-                                    style: const TextStyle(
-                                      color: Colors.white,
+                                    style: TextStyle(
+                                      color: theme.colorScheme.onSurface,
                                       fontWeight: FontWeight.bold,
                                       fontSize: 14,
                                     ),
                                   ),
-
                                   const SizedBox(height: 6),
-
                                   Row(
                                     children: [
                                       const Icon(
@@ -444,16 +492,18 @@ class _HomePageState extends State<HomePage> {
                                       const SizedBox(width: 4),
                                       Text(
                                         '${product['rating']}',
-                                        style: const TextStyle(
-                                          color: Colors.white70,
+                                        style: TextStyle(
+                                          color: theme.colorScheme.onSurface
+                                              .withValues(alpha: 0.7),
                                           fontSize: 12,
                                         ),
                                       ),
                                       const Spacer(),
-                                      const Icon(
+                                      Icon(
                                         Icons.arrow_forward_ios,
                                         size: 12,
-                                        color: Colors.white38,
+                                        color: theme.colorScheme.onSurface
+                                            .withValues(alpha: 0.4),
                                       ),
                                     ],
                                   ),
@@ -465,7 +515,6 @@ class _HomePageState extends State<HomePage> {
                       ),
                     );
                   }, childCount: filtered.length),
-
                   gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                     crossAxisCount: 2,
                     mainAxisSpacing: 14,

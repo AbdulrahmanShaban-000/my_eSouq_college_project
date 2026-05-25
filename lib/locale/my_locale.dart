@@ -84,6 +84,10 @@ class MyLocale implements Translations {
       'enter_sequrity_code': 'Enter Security Code',
       'enter_promo_code': 'Enter Promo Code',
       'make_payment': 'Make Payment',
+      'edit_profile': 'Edit Profile',
+      'choose_image': 'Choose Image',
+      'save': 'Save',
+      'cancel': 'Cancel',
     },
 
     // ================= ARABIC =================
@@ -143,6 +147,7 @@ class MyLocale implements Translations {
       'trousers': 'السروال',
       'shoes': 'الحذاء',
       'accessories': 'الأكسسوارات',
+      'edit_profile': 'تعديل الملف الشخصي',
 
       // ================= Buying =================
       'subtotal': 'المجموع الفرعي',
@@ -166,6 +171,9 @@ class MyLocale implements Translations {
       'enter_sequrity_code': 'أدخل رمز الأمان',
       'enter_promo_code': 'أدخل رمز العرض',
       'make_payment': 'قم بالدفع',
+      'choose_image': 'اختر صورة',
+      'save': 'حفظ',
+      'cancel': 'إلغاء',
     },
   };
 }
