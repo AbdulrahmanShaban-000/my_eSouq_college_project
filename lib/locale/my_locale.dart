@@ -88,6 +88,14 @@ class MyLocale implements Translations {
       'choose_image': 'Choose Image',
       'save': 'Save',
       'cancel': 'Cancel',
+      // Track Order
+      'track_order': 'Track Order',
+      'order_id': 'Order ID',
+      'status_timeline': 'Status timeline',
+      'track_order_empty':
+          'No tracking data yet. You can start demo tracking from here.',
+      'start_demo_tracking': 'Start Demo Tracking',
+      'shipping_address': 'Shipping Address',
     },
 
     // ================= ARABIC =================
@@ -174,6 +182,14 @@ class MyLocale implements Translations {
       'choose_image': 'اختر صورة',
       'save': 'حفظ',
       'cancel': 'إلغاء',
+      // Track Order
+      'track_order': 'تتبع الطلب',
+      'order_id': 'رقم الطلب',
+      'status_timeline': 'خط حالة الطلب',
+      'track_order_empty':
+          'لا توجد بيانات تتبع بعد. يمكنك بدء تتبع تجريبي من هنا.',
+      'start_demo_tracking': 'بدء تتبع تجريبي',
+       'shipping_address': 'عنوان الشحن',
     },
   };
 }

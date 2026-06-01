@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:get/get.dart';
+import 'package:my_esouq/models/adress_model.dart';
 
 class CheckingOutPage extends StatefulWidget {
   const CheckingOutPage({super.key});
@@ -10,6 +11,174 @@ class CheckingOutPage extends StatefulWidget {
 }
 
 class _CheckingOutPageState extends State<CheckingOutPage> {
+  void showSuccessDialog() {
+    Get.dialog(
+      Dialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TweenAnimationBuilder<double>(
+                tween: Tween(begin: 0.5, end: 1),
+                duration: const Duration(milliseconds: 700),
+                curve: Curves.elasticOut,
+                builder: (context, value, child) {
+                  return Transform.scale(scale: value, child: child);
+                },
+                child: Container(
+                  width: 100,
+                  height: 100,
+                  decoration: BoxDecoration(
+                    color: Colors.green.withValues(alpha: 0.15),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(
+                    Icons.check_circle_rounded,
+                    color: Colors.green,
+                    size: 65,
+                  ),
+                ),
+              ),
+
+              const SizedBox(height: 25),
+
+              const Text(
+                "Payment Successful",
+                textAlign: TextAlign.center,
+                style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+              ),
+
+              const SizedBox(height: 12),
+
+              Text(
+                "Thank you for your purchase.\nYour order has been placed successfully.",
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 15,
+                  color: Colors.grey.shade600,
+                  height: 1.5,
+                ),
+              ),
+
+              const SizedBox(height: 30),
+
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 18,
+                  vertical: 14,
+                ),
+                decoration: BoxDecoration(
+                  color: Colors.green.withValues(alpha: 0.08),
+                  borderRadius: BorderRadius.circular(18),
+                ),
+                child: Row(
+                  children: const [
+                    Icon(Icons.local_shipping_outlined, color: Colors.green),
+                    SizedBox(width: 12),
+                    Expanded(child: Text("Your order is now being processed.")),
+                  ],
+                ),
+              ),
+
+              const SizedBox(height: 30),
+
+              SizedBox(
+                width: double.infinity,
+                height: 58,
+                child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.green,
+                    foregroundColor: Colors.white,
+                    elevation: 0,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(18),
+                    ),
+                  ),
+                  onPressed: () {
+                    Get.back(); // إغلاق الديالوج
+                    Get.back(); // الرجوع للصفحة السابقة
+                  },
+                  child: const Text(
+                    "Continue Shopping",
+                    style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+      barrierDismissible: false,
+    );
+  }
+
+  void _showAddressPicker() {
+    Get.bottomSheet(
+      Container(
+        padding: const EdgeInsets.all(20),
+
+        decoration: BoxDecoration(
+          color: Get.theme.cardColor,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(25)),
+        ),
+        child: Obx(
+          () => Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Text(
+                "اختر العنوان",
+                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+              ),
+
+              const SizedBox(height: 20),
+
+              ...addressController.addresses.map(
+                (address) => ListTile(
+                  leading: Radio<String>(
+                    value: address.id,
+                    groupValue: addressController.selectedId.value,
+                    onChanged: (value) {
+                      addressController.selectedId.value = value!;
+                      Get.back();
+                    },
+                  ),
+                  title: Text(address.title),
+                  subtitle: Text(address.details),
+                  trailing: IconButton(
+                    icon: const Icon(Icons.edit),
+                    onPressed: () => _editAddress(address),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 35),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _editAddress(AddressModel address) {
+    final controller = TextEditingController(text: address.details);
+
+    Get.defaultDialog(
+      title: "تعديل العنوان",
+      content: TextField(
+        controller: controller,
+        decoration: const InputDecoration(hintText: "أدخل العنوان الجديد"),
+      ),
+      textConfirm: "حفظ",
+      textCancel: "إلغاء",
+      onConfirm: () {
+        addressController.updateAddress(address.id, controller.text);
+
+        Get.back();
+      },
+    );
+  }
+
   int selectedPayment = 0;
 
   final List<Map<String, dynamic>> paymentMethods = [
@@ -37,6 +206,7 @@ class _CheckingOutPageState extends State<CheckingOutPage> {
 
   final TextEditingController securityController = TextEditingController();
   final TextEditingController promoController = TextEditingController();
+  final AddressController addressController = Get.find<AddressController>();
 
   bool validateCodes() {
     return securityController.text.isNotEmpty ||
@@ -53,7 +223,7 @@ class _CheckingOutPageState extends State<CheckingOutPage> {
   @override
   Widget build(BuildContext context) {
     final currentCard = paymentMethods[selectedPayment];
-    // جلب خصائص الثيم الحالي ديناميكياً
+
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
 
@@ -64,18 +234,14 @@ class _CheckingOutPageState extends State<CheckingOutPage> {
           gradient: LinearGradient(
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
-            // تدرج لوني يتكيف تلقائياً حسب وضع الثيم (فاتح أو داكن)
+            // تدرج لوني يتغير تلقائياً حسب وضع التطبيق
             colors: isDark
                 ? [
-                    theme.colorScheme.surfaceContainerLowest,
-                    theme.colorScheme.surfaceContainerLow,
-                    theme.colorScheme.surface,
+                    const Color(0xFF0F2027),
+                    const Color(0xFF203A43),
+                    const Color(0xFF2C5364),
                   ]
-                : [
-                    theme.colorScheme.surfaceContainerHigh,
-                    theme.colorScheme.surfaceContainerLow,
-                    theme.scaffoldBackgroundColor,
-                  ],
+                : [Colors.grey[50]!, Colors.grey[200]!, Colors.grey[300]!],
           ),
         ),
         child: SafeArea(
@@ -122,14 +288,12 @@ class _CheckingOutPageState extends State<CheckingOutPage> {
 
                     const SizedBox(height: 10),
 
-                    /// MAIN CONTENT (DYNAMIC GLASS STYLE)
                     Expanded(
                       child: Container(
                         width: double.infinity,
                         margin: const EdgeInsets.only(top: 15),
                         padding: const EdgeInsets.all(24),
                         decoration: BoxDecoration(
-                          // ألوان الخلفية والحدود تأخذ شفافية متغيرة بناءً على لون نصوص الخلفية
                           color: theme.colorScheme.onSurface.withValues(
                             alpha: 0.04,
                           ),
@@ -145,7 +309,112 @@ class _CheckingOutPageState extends State<CheckingOutPage> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            /// TITLE
+                            /// SHIPPING ADDRESS SECTION
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.start,
+                              children: [
+                                Text(
+                                  "shipping_address".tr,
+                                  style: TextStyle(
+                                    fontSize: 24,
+                                    fontWeight: FontWeight.bold,
+                                    color: theme.colorScheme.onSurface,
+                                  ),
+                                ),
+                              ],
+                            ),
+
+                            const SizedBox(height: 15),
+
+                            Obx(() {
+                              final selectedAddress = addressController
+                                  .addresses
+                                  .firstWhere(
+                                    (e) =>
+                                        e.id ==
+                                        addressController.selectedId.value,
+                                  );
+
+                              return GestureDetector(
+                                onTap: _showAddressPicker,
+                                child: Container(
+                                  padding: const EdgeInsets.all(18),
+                                  decoration: BoxDecoration(
+                                    color: theme.colorScheme.onSurface
+                                        .withValues(alpha: 0.05),
+                                    borderRadius: BorderRadius.circular(24),
+                                    border: Border.all(
+                                      color: theme.colorScheme.onSurface
+                                          .withValues(alpha: 0.1),
+                                    ),
+                                  ),
+                                  child: Row(
+                                    children: [
+                                      Container(
+                                        padding: const EdgeInsets.all(12),
+                                        decoration: BoxDecoration(
+                                          color: theme.colorScheme.primary
+                                              .withValues(alpha: 0.15),
+                                          borderRadius: BorderRadius.circular(
+                                            16,
+                                          ),
+                                        ),
+                                        child: Icon(
+                                          Icons.location_on,
+                                          color: theme.colorScheme.primary,
+                                          size: 28,
+                                        ),
+                                      ),
+
+                                      const SizedBox(width: 16),
+
+                                      Expanded(
+                                        child: Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            Text(
+                                              selectedAddress.title,
+                                              style: TextStyle(
+                                                fontSize: 18,
+                                                fontWeight: FontWeight.bold,
+                                                color:
+                                                    theme.colorScheme.onSurface,
+                                              ),
+                                            ),
+
+                                            const SizedBox(height: 10),
+
+                                            Text(
+                                              selectedAddress.details,
+                                              style: TextStyle(
+                                                fontSize: 14,
+                                                color: theme
+                                                    .colorScheme
+                                                    .onSurface
+                                                    .withValues(alpha: 0.6),
+                                              ),
+                                              maxLines: 2,
+                                              overflow: TextOverflow.ellipsis,
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+
+                                      Icon(
+                                        Icons.keyboard_arrow_down_rounded,
+                                        color: theme.colorScheme.onSurface,
+                                        size: 30,
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              );
+                            }),
+
+                            const SizedBox(height: 15),
+
+                            /// PAYMENT TITLE
                             Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
@@ -489,13 +758,7 @@ class _CheckingOutPageState extends State<CheckingOutPage> {
                                           return;
                                         }
 
-                                        Get.snackbar(
-                                          "Success",
-                                          "Payment completed successfully",
-                                          backgroundColor: Colors.green,
-                                          colorText: Colors.white,
-                                          snackPosition: SnackPosition.BOTTOM,
-                                        );
+                                        showSuccessDialog();
                                       },
                                       child: Row(
                                         mainAxisAlignment:

@@ -7,6 +7,8 @@ import 'package:my_esouq/home/screens/favourites_page.dart';
 import 'package:my_esouq/home/screens/home_page.dart';
 import 'package:my_esouq/home/screens/nav_bar.dart';
 import 'package:my_esouq/home/screens/profile_page.dart';
+import 'package:my_esouq/home/screens/track_order_page.dart';
+import 'package:my_esouq/controllers/orders_controller.dart';
 
 class CartPage extends StatelessWidget {
   CartPage({super.key});
@@ -49,6 +51,7 @@ class CartPage extends StatelessWidget {
               SliverAppBar(
                 iconTheme: IconThemeData(color: theme.colorScheme.onSurface),
                 expandedHeight: 150,
+
                 floating: true,
                 pinned: true,
                 backgroundColor: Colors
@@ -76,6 +79,19 @@ class CartPage extends StatelessWidget {
                   ],
                 ),
                 actions: [
+                  IconButton(
+                    tooltip: 'track_order'.tr,
+                    icon: const Icon(Icons.local_shipping_outlined),
+                    onPressed: () async {
+                      final ordersController = Get.find<OrdersController>();
+                      if (ordersController.currentOrderId.value.isEmpty) {
+                        await ordersController.startTrackingAfterCheckout(
+                          paymentMethod: 'Mock',
+                        );
+                      }
+                      Get.to(() => const TrackOrderPage());
+                    },
+                  ),
                   IconButton(
                     onPressed: cartItems.isEmpty
                         ? null

@@ -7,6 +7,8 @@ import 'package:my_esouq/controllers/product_controller.dart';
 import 'package:my_esouq/controllers/recent_orders_controller.dart';
 import 'package:my_esouq/controllers/profile_controller.dart';
 import 'package:my_esouq/controllers/theme_controller.dart';
+import 'package:my_esouq/controllers/orders_controller.dart';
+import 'package:my_esouq/models/adress_model.dart';
 
 class AppBinding extends Bindings {
   @override
@@ -17,6 +19,8 @@ class AppBinding extends Bindings {
     Get.put(FavouriteController(), permanent: true);
     Get.put(RecentOrdersController(), permanent: true);
     Get.put(ThemeController(), permanent: true);
+    Get.put(OrdersController(), permanent: true);
+    Get.put(AddressController(), permanent: true);
 
     // ProfileController requires AuthController.
     Get.put(

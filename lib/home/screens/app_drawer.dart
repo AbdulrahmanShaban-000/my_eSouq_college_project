@@ -14,7 +14,6 @@ class AppDrawer extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // جلب الألوان الحالية من الثيم لضمان الديناميكية
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
 
@@ -39,7 +38,7 @@ class AppDrawer extends StatelessWidget {
                         ),
                         decoration: BoxDecoration(
                           borderRadius: BorderRadius.circular(24),
-                          // استخدام لون متناسق مع الخلفية البيضاء أو الداكنة
+
                           color: isDark
                               ? Colors.white.withValues(alpha: 0.05)
                               : Colors.black.withValues(alpha: 0.04),
@@ -205,7 +204,6 @@ class AppDrawer extends StatelessWidget {
                         ),
                       ),
 
-                      // هذا الـ Spacer سيعمل الآن بشكل صحيح بفضل استخدام IntrinsicHeight و Column
                       const Spacer(),
 
                       /// LOGOUT BUTTON

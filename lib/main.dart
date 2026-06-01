@@ -10,7 +10,8 @@ import 'package:my_esouq/home/screens/profile_page.dart';
 import 'package:my_esouq/locale/my_locale.dart';
 import 'package:my_esouq/services/storage_service.dart';
 import 'package:my_esouq/splash/splash_screen.dart';
-import 'package:my_esouq/controllers/theme_controller.dart'; // تأكد من استيراد الـ ThemeController الخاص بك
+import 'package:my_esouq/controllers/theme_controller.dart'; 
+import 'package:my_esouq/home/screens/track_order_page.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -83,6 +84,7 @@ class MyApp extends StatelessWidget {
         GetPage(name: '/cart', page: () => CartPage()),
         GetPage(name: '/favourites', page: () => FavouritesPage()),
         GetPage(name: '/checkout', page: () => const CheckingOutPage()),
+        GetPage(name: '/track-order', page: () => const TrackOrderPage()),
       ],
     );
   }

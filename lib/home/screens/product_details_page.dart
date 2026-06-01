@@ -89,18 +89,14 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
           gradient: LinearGradient(
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
-            // التدرج اللوني يعتمد بالكامل على لوحة ألوان الثيم النشط
+            // تدرج لوني يتغير تلقائياً حسب وضع التطبيق
             colors: isDark
                 ? [
-                    theme.scaffoldBackgroundColor,
-                    theme.colorScheme.surfaceContainerHighest,
-                    theme.colorScheme.surface,
+                    const Color(0xFF0F2027),
+                    const Color(0xFF203A43),
+                    const Color(0xFF2C5364),
                   ]
-                : [
-                    theme.scaffoldBackgroundColor,
-                    theme.colorScheme.surfaceContainerLow,
-                    theme.colorScheme.surfaceContainerHighest,
-                  ],
+                : [Colors.grey[50]!, Colors.grey[200]!, Colors.grey[300]!],
           ),
         ),
         child: CustomScrollView(
