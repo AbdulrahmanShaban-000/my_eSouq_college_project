@@ -2,10 +2,9 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 class StorageService {
   static const String _loginKey = 'is_logged_in';
-  static const String _nameKey = 'first_name';
+  static const String _firstNameKey = 'first_name';
   static const String _phoneKey = 'phone';
-  static const String _emailKey = 'email';
-  static const String _imageKey = 'image_path';
+  static const String _lastNameKey = 'email';
   static const String _langKey = 'app_language';
 
   static Future<void> setLoggedIn(bool value) async {
@@ -19,21 +18,20 @@ class StorageService {
   }
 
   static Future<void> saveUser({
-    required String name,
+    required String first_name,
     required String phone,
-    required String email,
-    required String image,
+    required String last_name,
+ 
   }) async {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setString(_nameKey, name);
+    await prefs.setString(_firstNameKey, first_name);
     await prefs.setString(_phoneKey, phone);
-    await prefs.setString(_emailKey, email);
-    await prefs.setString(_imageKey, image);
+    await prefs.setString(_lastNameKey, last_name);
   }
 
-  static Future<String> getName() async {
+  static Future<String> getFirstName() async {
     final prefs = await SharedPreferences.getInstance();
-    return prefs.getString(_nameKey) ?? '';
+    return prefs.getString(_firstNameKey) ?? '';
   }
 
   static Future<String> getPhone() async {
@@ -41,22 +39,17 @@ class StorageService {
     return prefs.getString(_phoneKey) ?? '';
   }
 
-  static Future<String> getEmail() async {
+  static Future<String> getLastName() async {
     final prefs = await SharedPreferences.getInstance();
-    return prefs.getString(_emailKey) ?? '';
+    return prefs.getString(_lastNameKey) ?? '';
   }
 
-  static Future<String> getImage() async {
-    final prefs = await SharedPreferences.getInstance();
-    return prefs.getString(_imageKey) ?? '';
-  }
-
+   
   static Future<void> clearUser() async {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.remove(_nameKey);
+    await prefs.remove(_firstNameKey);
     await prefs.remove(_phoneKey);
-    await prefs.remove(_emailKey);
-    await prefs.remove(_imageKey);
+    await prefs.remove(_lastNameKey);
     await prefs.remove(_loginKey);
   }
 
@@ -74,4 +67,15 @@ class StorageService {
     final prefs = await SharedPreferences.getInstance();
     return prefs.getString(_langKey) ?? 'en';
   }
+static Future<void> saveToken(String token) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('token', token);
+  }
+
+  static Future<String?> getToken() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString('token');
+  }
+
+
 }

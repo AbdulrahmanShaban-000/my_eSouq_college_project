@@ -1,16 +1,14 @@
-import 'dart:io';
-
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:my_esouq/controllers/auth_controller.dart';
-import 'package:my_esouq/controllers/recent_orders_controller.dart';
-import 'package:my_esouq/home/screens/app_drawer.dart';
-import 'package:my_esouq/auth/screens/login_screen.dart';
-import 'package:my_esouq/home/screens/cart_page.dart';
-import 'package:my_esouq/home/screens/favourites_page.dart';
-import 'package:my_esouq/home/screens/home_page.dart';
-import 'package:my_esouq/home/screens/nav_bar.dart';
-import 'package:my_esouq/home/screens/profile_edit_page.dart';
+import 'package:zad/controllers/auth_controller.dart';
+import 'package:zad/controllers/recent_orders_controller.dart';
+import 'package:zad/home/screens/app_drawer.dart';
+import 'package:zad/auth/screens/login_screen.dart';
+import 'package:zad/home/screens/cart_page.dart';
+import 'package:zad/home/screens/favourites_page.dart';
+import 'package:zad/home/screens/home_page.dart';
+import 'package:zad/home/screens/nav_bar.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
@@ -104,27 +102,14 @@ class _ProfilePageState extends State<ProfilePage> {
                     ),
                     child: Row(
                       children: [
-                        CircleAvatar(
-                          radius: 35,
-                          backgroundColor: theme.colorScheme.primary.withValues(
-                            alpha: 0.2,
-                          ),
-                          backgroundImage:
-                              authController.imagePath.value.isNotEmpty
-                              ? FileImage(File(authController.imagePath.value))
-                              : const NetworkImage(
-                                      'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150',
-                                    )
-                                    as ImageProvider,
-                        ),
                         const SizedBox(width: 16),
                         Expanded(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                authController.name.value.isNotEmpty
-                                    ? authController.name.value
+                                authController.first_name.value.isNotEmpty
+                                    ? authController.first_name.value
                                     : 'User',
                                 style: TextStyle(
                                   fontSize: 22,
@@ -134,8 +119,8 @@ class _ProfilePageState extends State<ProfilePage> {
                               ),
                               const SizedBox(height: 4),
                               Text(
-                                authController.email.value.isNotEmpty
-                                    ? authController.email.value
+                                authController.last_name.value.isNotEmpty
+                                    ? authController.last_name.value
                                     : 'No email',
                                 style: TextStyle(
                                   color: theme.colorScheme.onSurface.withValues(
@@ -144,14 +129,6 @@ class _ProfilePageState extends State<ProfilePage> {
                                 ),
                               ),
                             ],
-                          ),
-                        ),
-                        IconButton(
-                          onPressed: () =>
-                              Get.to(() => const ProfileEditPage()),
-                          icon: Icon(
-                            Icons.edit,
-                            color: theme.colorScheme.primary,
                           ),
                         ),
                       ],
@@ -214,18 +191,12 @@ class _ProfilePageState extends State<ProfilePage> {
                           color: theme.colorScheme.primary,
                         ),
                         title: Text(
-                          authController.email.value.isNotEmpty
-                              ? authController.email.value
+                          authController.last_name.value.isNotEmpty
+                              ? authController.first_name.value +
+                                    ' ' +
+                                    authController.last_name.value
                               : 'No email',
                           style: TextStyle(color: theme.colorScheme.onSurface),
-                        ),
-                        subtitle: Text(
-                          'email'.tr,
-                          style: TextStyle(
-                            color: theme.colorScheme.onSurface.withValues(
-                              alpha: 0.6,
-                            ),
-                          ),
                         ),
                       ),
                     ],
@@ -301,7 +272,7 @@ class _ProfilePageState extends State<ProfilePage> {
 
               return SliverList(
                 delegate: SliverChildBuilderDelegate((context, index) {
-                  final product = recentOrdersController.recentOrders[index];
+                  final product = recentOrdersController.recentProducts[index];
 
                   return Container(
                     margin: const EdgeInsets.symmetric(
@@ -324,12 +295,28 @@ class _ProfilePageState extends State<ProfilePage> {
                       children: [
                         ClipRRect(
                           borderRadius: BorderRadius.circular(12),
-                          child: Image.network(
-                            product['image'],
+                          child: CachedNetworkImage(
+                            imageUrl: product.getImageUrl(),
                             width: 60,
                             height: 60,
                             fit: BoxFit.cover,
-                            errorBuilder: (c, e, s) => Container(
+                            placeholder: (c, url) => Container(
+                              width: 60,
+                              height: 60,
+                              color: theme.colorScheme.onSurface.withValues(
+                                alpha: 0.1,
+                              ),
+                              child: Center(
+                                child: SizedBox(
+                                  width: 18,
+                                  height: 18,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                  ),
+                                ),
+                              ),
+                            ),
+                            errorWidget: (c, url, e) => Container(
                               width: 60,
                               height: 60,
                               color: theme.colorScheme.onSurface.withValues(
@@ -350,7 +337,7 @@ class _ProfilePageState extends State<ProfilePage> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                product['name'],
+                                product.name,
                                 style: TextStyle(
                                   color: theme.colorScheme.onSurface,
                                   fontWeight: FontWeight.bold,
@@ -358,7 +345,7 @@ class _ProfilePageState extends State<ProfilePage> {
                               ),
                               const SizedBox(height: 4),
                               Text(
-                                product['price'],
+                                'Price: ${product.price} SAR',
                                 style: TextStyle(
                                   color: theme.colorScheme.onSurface.withValues(
                                     alpha: 0.6,
@@ -455,7 +442,7 @@ class _ProfilePageState extends State<ProfilePage> {
         onTap: (index) {
           switch (index) {
             case 0:
-              Get.offAll(() => const HomePage());
+              Get.offAll(() =>   HomePage());
               break;
             case 1:
               Get.offAll(() => FavouritesPage());

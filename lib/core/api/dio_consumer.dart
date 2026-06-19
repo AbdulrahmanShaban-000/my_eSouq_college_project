@@ -1,8 +1,8 @@
 import 'package:dio/dio.dart';
-import 'package:my_esouq/core/api/api_consumer.dart';
-import 'package:my_esouq/core/api/api_interceptor.dart';
-import 'package:my_esouq/core/api/end_points.dart';
-import 'package:my_esouq/core/errors/exception.dart';
+import 'package:zad/core/api/api_consumer.dart';
+import 'package:zad/core/api/api_interceptor.dart';
+import 'package:zad/core/api/end_points.dart';
+import 'package:zad/core/errors/exception.dart';
 
 class DioConsumer extends ApiConsumer {
   final Dio dio;

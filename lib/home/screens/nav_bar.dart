@@ -9,24 +9,24 @@ class NavBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // جلب بيانات الثيم الحالي للتطبيق
+
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
 
     return BottomNavigationBar(
       type: BottomNavigationBarType.fixed,
 
-      // تغيير الخلفية تلقائياً بناءً على وضع الثيم
+   
       backgroundColor:
           theme.bottomNavigationBarTheme.backgroundColor ??
           (isDark ? const Color(0xFF0F2027) : Colors.white),
 
-      // تحديد لون العنصر المختار (يفضل استخدام الـ primaryColor للتطبيق)
+     
       selectedItemColor:
           theme.bottomNavigationBarTheme.selectedItemColor ??
           theme.primaryColor,
 
-      // تحديد لون العناصر غير المختارة تلقائياً لتناسب الخلفية الفاتحة أو الداكنة
+     
       unselectedItemColor:
           theme.bottomNavigationBarTheme.unselectedItemColor ??
           (isDark ? Colors.white54 : Colors.black45),

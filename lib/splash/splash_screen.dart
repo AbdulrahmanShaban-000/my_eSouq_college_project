@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
-import 'package:my_esouq/controllers/auth_controller.dart';
-import 'package:my_esouq/auth/screens/login_screen.dart';
-import 'package:my_esouq/home/screens/home_page.dart';
+import 'package:zad/controllers/auth_controller.dart';
+import 'package:zad/auth/screens/login_screen.dart';
+import 'package:zad/home/screens/home_page.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -97,7 +97,7 @@ class _SplashScreenState extends State<SplashScreen>
                       ),
                       const SizedBox(height: 20),
                       Text(
-                        'my_esouq'.tr,
+                        'zad'.tr,
                         style: const TextStyle(
                           color: Colors.white,
                           fontSize: 30,

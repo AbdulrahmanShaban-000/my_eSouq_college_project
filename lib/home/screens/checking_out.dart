@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:get/get.dart';
-import 'package:my_esouq/models/adress_model.dart';
+import 'package:zad/controllers/cart_controller.dart';
+import 'package:zad/home/screens/home_page.dart';
+import 'package:zad/models/adress_model.dart';
 
 class CheckingOutPage extends StatefulWidget {
   const CheckingOutPage({super.key});
@@ -31,10 +33,12 @@ class _CheckingOutPageState extends State<CheckingOutPage> {
                   width: 100,
                   height: 100,
                   decoration: BoxDecoration(
-                    color: Colors.green.withValues(alpha: 0.15),
+                    color: Colors.green.withOpacity(
+                      0.15,
+                    ), 
                     shape: BoxShape.circle,
                   ),
-                  child: const Icon(
+                  child: Icon(
                     Icons.check_circle_rounded,
                     color: Colors.green,
                     size: 65,
@@ -51,7 +55,6 @@ class _CheckingOutPageState extends State<CheckingOutPage> {
               ),
 
               const SizedBox(height: 12),
-
               Text(
                 "Thank you for your purchase.\nYour order has been placed successfully.",
                 textAlign: TextAlign.center,
@@ -70,7 +73,7 @@ class _CheckingOutPageState extends State<CheckingOutPage> {
                   vertical: 14,
                 ),
                 decoration: BoxDecoration(
-                  color: Colors.green.withValues(alpha: 0.08),
+                  color: Colors.green.withOpacity(0.08),
                   borderRadius: BorderRadius.circular(18),
                 ),
                 child: Row(
@@ -97,8 +100,11 @@ class _CheckingOutPageState extends State<CheckingOutPage> {
                     ),
                   ),
                   onPressed: () {
-                    Get.back(); // إغلاق الديالوج
-                    Get.back(); // الرجوع للصفحة السابقة
+                   
+                    Get.back();
+
+                  
+                    Get.offAll(  HomePage());
                   },
                   child: const Text(
                     "Continue Shopping",
@@ -118,7 +124,6 @@ class _CheckingOutPageState extends State<CheckingOutPage> {
     Get.bottomSheet(
       Container(
         padding: const EdgeInsets.all(20),
-
         decoration: BoxDecoration(
           color: Get.theme.cardColor,
           borderRadius: const BorderRadius.vertical(top: Radius.circular(25)),
@@ -131,28 +136,79 @@ class _CheckingOutPageState extends State<CheckingOutPage> {
                 "اختر العنوان",
                 style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
               ),
-
               const SizedBox(height: 20),
-
-              ...addressController.addresses.map(
-                (address) => ListTile(
-                  leading: Radio<String>(
-                    value: address.id,
-                    groupValue: addressController.selectedId.value,
-                    onChanged: (value) {
-                      addressController.selectedId.value = value!;
-                      Get.back();
-                    },
+              
+              if (addressController.addresses.isEmpty)
+                const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 20),
+                  child: Text(
+                    "لا توجد عناوين متاحة. يرجى إضافة عنوان أولاً.",
+                    style: TextStyle(fontSize: 16, color: Colors.grey),
+                    textAlign: TextAlign.center,
                   ),
-                  title: Text(address.title),
-                  subtitle: Text(address.details),
-                  trailing: IconButton(
-                    icon: const Icon(Icons.edit),
-                    onPressed: () => _editAddress(address),
+                )
+              else
+               
+                Column(
+                  children: addressController.addresses
+                      .map(
+                        (address) => ListTile(
+                          leading: Radio<String>(
+                            value: address.id,
+                            groupValue: addressController.selectedId.value,
+                            onChanged: (value) {
+                            
+                              addressController.selectedId.value = value!;
+                            },
+                          ),
+                          title: Text(address.title),
+                          subtitle: Text(address.details),
+                          trailing: IconButton(
+                            icon: const Icon(Icons.edit),
+                            onPressed: () => _editAddress(address),
+                          ),
+                        ),
+                      )
+                      .toList(), 
+                ),
+
+              const SizedBox(height: 35),
+              // زر التأكيد
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed:
+                      addressController
+                          .selectedId
+                          .value
+                          .isEmpty 
+                      ? null
+                      : () {
+                         
+                          Get.back();
+                         
+                        },
+                  style: ElevatedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(vertical: 15),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    backgroundColor: Get.theme.colorScheme.primary, 
+                    foregroundColor:
+                        Get.theme.colorScheme.onPrimary, 
+                  ),
+                  child: Text(
+                    addressController.selectedId.value.isEmpty
+                        ? "اختر عنوانًا أولاً"
+                        : "تأكيد العنوان المختار",
+                    style: const TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                 ),
               ),
-              const SizedBox(height: 35),
+              const SizedBox(height: 25),
             ],
           ),
         ),
@@ -207,6 +263,7 @@ class _CheckingOutPageState extends State<CheckingOutPage> {
   final TextEditingController securityController = TextEditingController();
   final TextEditingController promoController = TextEditingController();
   final AddressController addressController = Get.find<AddressController>();
+  final CartController cartController = Get.find<CartController>();
 
   bool validateCodes() {
     return securityController.text.isNotEmpty ||
@@ -234,7 +291,7 @@ class _CheckingOutPageState extends State<CheckingOutPage> {
           gradient: LinearGradient(
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
-            // تدرج لوني يتغير تلقائياً حسب وضع التطبيق
+           
             colors: isDark
                 ? [
                     const Color(0xFF0F2027),
@@ -757,8 +814,8 @@ class _CheckingOutPageState extends State<CheckingOutPage> {
                                           );
                                           return;
                                         }
-
                                         showSuccessDialog();
+                                        cartController.clearCart();
                                       },
                                       child: Row(
                                         mainAxisAlignment:

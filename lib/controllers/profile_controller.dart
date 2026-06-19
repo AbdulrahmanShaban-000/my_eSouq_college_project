@@ -1,7 +1,7 @@
 import 'package:flutter/widgets.dart';
 import 'package:get/get.dart';
 
-import 'package:my_esouq/controllers/auth_controller.dart';
+import 'package:zad/controllers/auth_controller.dart';
 
 class ProfileController extends GetxController {
   ProfileController({required this.authController});
@@ -10,9 +10,9 @@ class ProfileController extends GetxController {
 
   final formKey = GlobalKey<FormState>();
 
-  final nameController = TextEditingController();
+  final firstNameController = TextEditingController();
   final phoneController = TextEditingController();
-  final emailController = TextEditingController();
+  final lastNameController = TextEditingController();
 
   final RxString pickedImagePath = ''.obs;
 
@@ -23,10 +23,10 @@ class ProfileController extends GetxController {
   }
 
   void syncFromAuth() {
-    nameController.text = authController.name.value;
+    firstNameController.text = authController.first_name.value;
     phoneController.text = authController.phone.value;
-    emailController.text = authController.email.value;
-    pickedImagePath.value = authController.imagePath.value;
+    lastNameController.text = authController.last_name.value;
+   
   }
 
   String? validateName(String? value) {
@@ -55,24 +55,24 @@ class ProfileController extends GetxController {
     final isValid = formKey.currentState?.validate() ?? false;
     if (!isValid) return;
 
-    final name = nameController.text.trim();
+    final firstName = firstNameController.text.trim();
     final phone = phoneController.text.trim();
-    final email = emailController.text.trim();
-    final image = pickedImagePath.value;
+    final lastName = lastNameController.text.trim();
+ 
 
     await authController.setUser(
-      name: name,
+      first_name: firstName,
       phone: phone,
-      email: email,
-      image: image,
+      last_name: lastName,
+      
     );
   }
 
   @override
   void onClose() {
-    nameController.dispose();
+    firstNameController.dispose();
     phoneController.dispose();
-    emailController.dispose();
+    lastNameController.dispose();
     super.onClose();
   }
 }

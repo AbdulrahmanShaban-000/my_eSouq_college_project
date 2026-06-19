@@ -1,10 +1,10 @@
-import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:my_esouq/auth/screens/login_screen.dart';
-import 'package:my_esouq/controllers/auth_controller.dart';
-import 'package:my_esouq/controllers/theme_controller.dart';
-import 'package:my_esouq/services/storage_service.dart';
+import 'package:zad/auth/screens/login_screen.dart';
+import 'package:zad/controllers/auth_controller.dart';
+import 'package:zad/controllers/theme_controller.dart';
+import 'package:zad/services/storage_service.dart';
 
 class AppDrawer extends StatelessWidget {
   AppDrawer({super.key});
@@ -49,8 +49,8 @@ class AppDrawer extends StatelessWidget {
                           ),
                         ),
                         child: Obx(() {
-                          final name = authController.name.value;
-                          final image = authController.imagePath.value;
+                          final name = authController.first_name.value;
+                         
 
                           return Column(
                             children: [
@@ -67,22 +67,7 @@ class AppDrawer extends StatelessWidget {
                                     ),
                                   ],
                                 ),
-                                child: CircleAvatar(
-                                  radius: 60,
-                                  backgroundColor: isDark
-                                      ? Colors.white24
-                                      : Colors.black12,
-                                  backgroundImage: image.isNotEmpty
-                                      ? FileImage(File(image))
-                                      : null,
-                                  child: image.isEmpty
-                                      ? Icon(
-                                          Icons.person_rounded,
-                                          size: 42,
-                                          color: theme.iconTheme.color,
-                                        )
-                                      : null,
-                                ),
+                                
                               ),
                               const SizedBox(height: 14),
                               Text(
@@ -96,7 +81,7 @@ class AppDrawer extends StatelessWidget {
                               ),
                               const SizedBox(height: 6),
                               Text(
-                                'my_esouq'.tr,
+                                'zad'.tr,
                                 style: TextStyle(
                                   color: theme.textTheme.bodyMedium?.color
                                       ?.withValues(alpha: 0.7),

@@ -1,6 +1,6 @@
 {
-    "name": "my_esouq",
-    "short_name": "my_esouq",
+    "name": "zad",
+    "short_name": "zad",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",

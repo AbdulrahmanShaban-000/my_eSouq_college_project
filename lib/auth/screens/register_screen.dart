@@ -1,8 +1,10 @@
 import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:image_picker/image_picker.dart';
-import 'package:my_esouq/controllers/auth_controller.dart';
+import 'package:zad/controllers/auth_controller.dart';
+
+import 'package:zad/home/screens/home_page.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -14,32 +16,27 @@ class RegisterScreen extends StatefulWidget {
 class _RegisterScreenState extends State<RegisterScreen> {
   final _formKey = GlobalKey<FormState>();
 
-  final name = TextEditingController();
+  final firstName = TextEditingController();
   final phone = TextEditingController();
-  final email = TextEditingController();
+  final lastName = TextEditingController();
   final password = TextEditingController();
-  final confirm = TextEditingController();
+  final confirmPassword = TextEditingController();
 
   bool isLoading = false;
   bool obscurePassword = true;
-  bool obscureConfirm = true;
+
   bool acceptTerms = false;
 
   File? imageFile;
 
   final AuthController authController = Get.find<AuthController>();
 
-  Future<void> pickImage() async {
-    final picker = ImagePicker();
-    final picked = await picker.pickImage(source: ImageSource.gallery);
-    if (picked != null) {
-      setState(() => imageFile = File(picked.path));
-    }
-  }
-Future<void> register() async {
+  Future<void> register() async {
     if (!_formKey.currentState!.validate()) {
       return;
     }
+
+    authController.errorMessage.value = '';
 
     if (!acceptTerms) {
       ScaffoldMessenger.of(
@@ -50,28 +47,30 @@ Future<void> register() async {
 
     setState(() => isLoading = true);
 
-    await Future.delayed(const Duration(seconds: 2));
-
-     
-    await authController.setUser(
-      name: name.text.trim(),
-      phone: phone.text.trim(),
-      email: email.text.trim(),
-      image: imageFile?.path ?? '',
+    final success = await authController.register(
+      firstName: firstName.text.trim(),
+      lastName: lastName.text.trim(),
+      mobileNumber: phone.text.trim(),
+      password: password.text.trim(),
+      passwordConfirmation: confirmPassword.text.trim(),
     );
-
-   
-    await authController.login();
-
-   
-    await authController.loadUser();
 
     setState(() => isLoading = false);
 
     if (!mounted) return;
 
-   
-    Get.offAllNamed('/home');
+    if (success) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('welcome'.tr)));
+      Get.offAll(() => const HomePage());
+      return;
+    }
+
+    final msg = authController.errorMessage.value.trim();
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(msg.isEmpty ? 'حدث خطأ غير متوقع' : msg)),
+    );
   }
 
   InputDecoration _input(String label, IconData icon, {Widget? suffix}) {
@@ -92,11 +91,11 @@ Future<void> register() async {
 
   @override
   void dispose() {
-    name.dispose();
+    firstName.dispose();
     phone.dispose();
-    email.dispose();
+    lastName.dispose();
     password.dispose();
-    confirm.dispose();
+    confirmPassword.dispose();
     super.dispose();
   }
 
@@ -123,35 +122,6 @@ Future<void> register() async {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  GestureDetector(
-                    onTap: pickImage,
-                    child: Stack(
-                      children: [
-                        CircleAvatar(
-                          radius: 45,
-                          backgroundColor: Colors.white24,
-                          backgroundImage:
-                              imageFile != null ? FileImage(imageFile!) : null,
-                          child: imageFile == null
-                              ? const Icon(Icons.person, size: 40, color: Colors.white)
-                              : null,
-                        ),
-                        Positioned(
-                          bottom: 0,
-                          right: 0,
-                          child: Container(
-                            padding: const EdgeInsets.all(6),
-                            decoration: const BoxDecoration(
-                              color: Colors.blueAccent,
-                              shape: BoxShape.circle,
-                            ),
-                            child: const Icon(Icons.camera_alt, size: 16, color: Colors.white),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 15),
                   Text(
                     'create_account'.tr,
                     style: const TextStyle(
@@ -166,11 +136,22 @@ Future<void> register() async {
                     child: Column(
                       children: [
                         TextFormField(
-                          controller: name,
+                          controller: firstName,
                           style: const TextStyle(color: Colors.white),
-                          decoration: _input('name'.tr, Icons.person),
-                          validator: (v) =>
-                              (v == null || v.trim().isEmpty) ? 'Required' : null,
+                          decoration: _input('first_name'.tr, Icons.person),
+                          validator: (v) => (v == null || v.trim().isEmpty)
+                              ? 'Required'
+                              : null,
+                        ),
+                        const SizedBox(height: 12),
+
+                        TextFormField(
+                          controller: lastName,
+                          style: const TextStyle(color: Colors.white),
+                          decoration: _input('last_name'.tr, Icons.person),
+                          validator: (v) => (v == null || v.trim().isEmpty)
+                              ? 'Required'
+                              : null,
                         ),
                         const SizedBox(height: 12),
                         TextFormField(
@@ -178,25 +159,16 @@ Future<void> register() async {
                           keyboardType: TextInputType.phone,
                           style: const TextStyle(color: Colors.white),
                           decoration: _input('phone'.tr, Icons.phone),
-                          validator: (v) =>
-                              (v == null || v.trim().isEmpty) ? 'Required' : null,
+                          validator: (v) => (v == null || v.trim().isEmpty)
+                              ? 'Required'
+                              : null,
                         ),
                         const SizedBox(height: 12),
-                        TextFormField(
-                          controller: email,
-                          keyboardType: TextInputType.emailAddress,
-                          style: const TextStyle(color: Colors.white),
-                          decoration: _input('email'.tr, Icons.email),
-                          validator: (v) {
-                            if (v == null || v.trim().isEmpty) return 'Required';
-                            if (!GetUtils.isEmail(v.trim())) return 'Invalid email';
-                            return null;
-                          },
-                        ),
-                        const SizedBox(height: 12),
+
                         TextFormField(
                           controller: password,
                           obscureText: obscurePassword,
+
                           style: const TextStyle(color: Colors.white),
                           decoration: _input(
                             'password'.tr,
@@ -220,32 +192,25 @@ Future<void> register() async {
                           },
                         ),
                         const SizedBox(height: 12),
+
                         TextFormField(
-                          controller: confirm,
-                          obscureText: obscureConfirm,
+                          controller: confirmPassword,
+                          obscureText: obscurePassword,
                           style: const TextStyle(color: Colors.white),
                           decoration: _input(
                             'password_confirm'.tr,
-                            Icons.lock,
-                            suffix: IconButton(
-                              icon: Icon(
-                                obscureConfirm
-                                    ? Icons.visibility_off
-                                    : Icons.visibility,
-                                color: Colors.white70,
-                              ),
-                              onPressed: () => setState(
-                                () => obscureConfirm = !obscureConfirm,
-                              ),
-                            ),
+                            Icons.lock_outline,
                           ),
                           validator: (v) {
                             if (v == null || v.isEmpty) return 'Required';
-                            if (v != password.text) return 'Not matched';
+                            if (v != password.text.trim()) {
+                              return 'Passwords do not match';
+                            }
                             return null;
                           },
                         ),
-                        const SizedBox(height: 10),
+                        const SizedBox(height: 12),
+
                         Row(
                           children: [
                             Checkbox(
@@ -275,7 +240,9 @@ Future<void> register() async {
                               ),
                             ),
                             child: isLoading
-                                ? const CircularProgressIndicator(color: Colors.white)
+                                ? const CircularProgressIndicator(
+                                    color: Colors.white,
+                                  )
                                 : Text(
                                     'create_account'.tr,
                                     style: const TextStyle(

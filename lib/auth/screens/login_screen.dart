@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:my_esouq/controllers/auth_controller.dart';
-import 'package:my_esouq/home/screens/home_page.dart';
-import 'package:my_esouq/services/storage_service.dart';
+import 'package:zad/controllers/auth_controller.dart';
+import 'package:zad/home/screens/home_page.dart';
+import 'package:zad/services/storage_service.dart';
 import 'register_screen.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -14,7 +14,7 @@ class LoginScreen extends StatefulWidget {
 
 class _LoginScreenState extends State<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
-  final emailController = TextEditingController();
+  final phoneController = TextEditingController();
   final passwordController = TextEditingController();
   final AuthController authController = Get.find<AuthController>();
 
@@ -30,20 +30,31 @@ class _LoginScreenState extends State<LoginScreen> {
   Future<void> login() async {
     if (!_formKey.currentState!.validate()) return;
 
+    authController.errorMessage.value = '';
+
     setState(() => isLoading = true);
 
-    await Future.delayed(const Duration(seconds: 2));
-
-    await authController.login();
+    final success = await authController.loginApi(
+      mobileNumber: phoneController.text.trim(),
+      password: passwordController.text.trim(),
+    );
 
     setState(() => isLoading = false);
 
     if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('welcome_back'.tr)),
-    );
 
-    Get.offAll(() => const HomePage());
+    if (success) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('welcome_back'.tr)));
+
+      Get.offAll(() => const HomePage());
+    } else {
+      final msg = authController.errorMessage.value.trim();
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(msg.isEmpty ? 'حدث خطأ غير متوقع' : msg)),
+      );
+    }
   }
 
   InputDecoration _input(String label, IconData icon, {Widget? suffix}) {
@@ -64,7 +75,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   void dispose() {
-    emailController.dispose();
+    phoneController.dispose();
     passwordController.dispose();
     super.dispose();
   }
@@ -79,7 +90,10 @@ class _LoginScreenState extends State<LoginScreen> {
         centerTitle: true,
         title: Text(
           'title'.tr,
-          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+          style: const TextStyle(
+            color: Colors.white,
+            fontWeight: FontWeight.bold,
+          ),
         ),
         actions: [
           IconButton(
@@ -87,6 +101,33 @@ class _LoginScreenState extends State<LoginScreen> {
             icon: const Icon(Icons.language, color: Colors.white),
           ),
         ],
+        leading: IconButton(
+          onPressed: () => showAboutDialog(
+            context: context,
+            applicationName: 'zad',
+            applicationVersion: '1.0.0',
+            applicationIcon: const Icon(
+              Icons.shopping_cart_outlined,
+              color: Color.fromARGB(255, 255, 255, 255),
+            ),
+            children: [
+              Text(
+                'app_description'.tr,
+                style: const TextStyle(
+                  color: Color.fromARGB(179, 255, 255, 255),
+                ),
+              ),
+              const SizedBox(height: 10),
+              Text(
+                'developed_by'.tr + ' Esouq Team',
+                style: const TextStyle(
+                  color: Color.fromARGB(179, 255, 255, 255),
+                ),
+              ),
+            ],
+          ),
+          icon: const Icon(Icons.info_outline, color: Colors.white),
+        ),
       ),
       body: Container(
         width: double.infinity,
@@ -112,7 +153,11 @@ class _LoginScreenState extends State<LoginScreen> {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const Icon(Icons.lock_person_rounded, size: 70, color: Colors.white),
+                  const Icon(
+                    Icons.lock_person_rounded,
+                    size: 70,
+                    color: Colors.white,
+                  ),
                   const SizedBox(height: 15),
                   Text(
                     'welcome_back'.tr,
@@ -135,17 +180,15 @@ class _LoginScreenState extends State<LoginScreen> {
                       children: [
                         // ✅ Validator مفعّل
                         TextFormField(
-                          controller: emailController,
+                          controller: phoneController,
                           style: const TextStyle(color: Colors.white),
-                          keyboardType: TextInputType.emailAddress,
-                          decoration: _input('email'.tr, Icons.email_outlined),
+                          keyboardType: TextInputType.phone,
+                          decoration: _input('phone'.tr, Icons.phone),
                           validator: (value) {
                             if (value == null || value.trim().isEmpty) {
-                              return 'email_required'.tr;
+                              return 'phone_required'.tr;
                             }
-                            if (!GetUtils.isEmail(value.trim())) {
-                              return 'Invalid email format';
-                            }
+
                             return null;
                           },
                         ),
@@ -160,10 +203,13 @@ class _LoginScreenState extends State<LoginScreen> {
                             Icons.lock_outline,
                             suffix: IconButton(
                               icon: Icon(
-                                obscure ? Icons.visibility_off : Icons.visibility,
+                                obscure
+                                    ? Icons.visibility_off
+                                    : Icons.visibility,
                                 color: Colors.white70,
                               ),
-                              onPressed: () => setState(() => obscure = !obscure),
+                              onPressed: () =>
+                                  setState(() => obscure = !obscure),
                             ),
                           ),
                           validator: (value) {
@@ -191,7 +237,9 @@ class _LoginScreenState extends State<LoginScreen> {
                               elevation: 0,
                             ),
                             child: isLoading
-                                ? const CircularProgressIndicator(color: Colors.white)
+                                ? const CircularProgressIndicator(
+                                    color: Colors.white,
+                                  )
                                 : Text(
                                     'sign_in'.tr,
                                     style: const TextStyle(

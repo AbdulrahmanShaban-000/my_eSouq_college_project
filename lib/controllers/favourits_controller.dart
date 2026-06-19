@@ -1,34 +1,111 @@
 import 'package:get/get.dart';
+import 'package:zad/core/api/api_consumer.dart';
+import 'package:zad/core/api/end_points.dart';
+import 'package:zad/models/Product.dart';
+import 'package:dio/dio.dart';
 
 class FavouriteController extends GetxController {
-  var favourites = <Map<String, dynamic>>[].obs;
+  final ApiConsumer api;
 
-  void addToFavourite(Map<String, dynamic> product) {
-    final exists = favourites.any((item) => item['id'] == product['id']);
+  FavouriteController() : api = Get.find<ApiConsumer>();
 
-    if (exists) {
-      Get.snackbar(
-        'Already Added',
-        '${product['name']} is already in favourites',
-      );
-      return;
-    }
+  var favourites = <Product>[].obs;
+  var isLoading = false.obs;
 
-    favourites.add(product);
-    Get.snackbar('Added', '${product['name']} added to favourites');
+  @override
+  void onInit() {
+    super.onInit();
+    fetchFavourites();
   }
 
-  void removeFavourite(int id) {
-    favourites.removeWhere((item) => item['id'] == id);
-    Get.snackbar('Removed', 'Item removed from favourites');
+  Future<void> fetchFavourites() async {
+    try {
+      isLoading.value = true;
+
+      final response = await api.get(EndPoints.favourites);
+
+      final data = response['data'];
+
+      if (data is! List) {
+        favourites.clear();
+        return;
+      }
+
+      favourites.value = data
+          .map<Product?>((item) {
+            final productJson = item is Map<String, dynamic>
+                ? (item['product'] ?? item)
+                : item;
+
+            if (productJson is Map<String, dynamic>) {
+              return Product.fromJson(productJson);
+            }
+
+            return null;
+          })
+          .whereType<Product>()
+          .toList();
+    } on DioException {
+      rethrow;
+    } catch (_) {
+      favourites.clear();
+    } finally {
+      isLoading.value = false;
+    }
+  }
+
+  Future<void> addToFavourite(Product product) async {
+    await addToFavouriteByProductId(product.id);
+  }
+
+  Future<void> addToFavouriteByProductId(int productId) async {
+    try {
+      final response = await api.post(
+        EndPoints.favourites,
+        data: {'product_id': productId},
+      );
+
+      final status = response['status'];
+      if (status == true) {
+        Get.snackbar(
+          'Added',
+          response['message'] ?? 'Product added to favourites',
+        );
+        await fetchFavourites();
+        return;
+      }
+
+      Get.snackbar('Info', response['message'] ?? 'Already added');
+    } catch (e) {
+      final raw = e.toString();
+      Get.snackbar('Error adding favourite', raw);
+    }
+  }
+
+  Future<void> addToFavouriteById(int productId) async {
+    await addToFavouriteByProductId(productId);
+  }
+
+  Future<void> removeFavourite(int productId) async {
+    try {
+      await api.delete('${EndPoints.favourites}/$productId');
+      Get.snackbar('Removed', 'Product removed from favourites');
+      await fetchFavourites();
+    } catch (_) {
+      Get.snackbar('Error', 'Failed to remove favourite');
+    }
+  }
+
+  Future<void> addToFavouriteProduct(Product product) async {
+    await addToFavouriteByProductId(product.id);
+  }
+
+  Future<void> clearAll() async {
+    await fetchFavourites();
+    favourites.clear();
   }
 
   bool isFavourite(int id) {
-    return favourites.any((item) => item['id'] == id);
-  }
-
-  void clearAll() {
-    favourites.clear();
-    Get.snackbar('Cleared', 'All favourites removed');
+    return favourites.any((item) => item.id == id);
   }
 }

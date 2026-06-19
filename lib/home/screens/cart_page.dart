@@ -1,14 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:my_esouq/controllers/cart_controller.dart';
-import 'package:my_esouq/controllers/recent_orders_controller.dart';
-import 'package:my_esouq/home/screens/app_drawer.dart';
-import 'package:my_esouq/home/screens/favourites_page.dart';
-import 'package:my_esouq/home/screens/home_page.dart';
-import 'package:my_esouq/home/screens/nav_bar.dart';
-import 'package:my_esouq/home/screens/profile_page.dart';
-import 'package:my_esouq/home/screens/track_order_page.dart';
-import 'package:my_esouq/controllers/orders_controller.dart';
+import 'package:zad/controllers/cart_controller.dart';
+import 'package:zad/controllers/recent_orders_controller.dart';
+import 'package:zad/home/screens/app_drawer.dart';
+import 'package:zad/home/screens/favourites_page.dart';
+import 'package:zad/home/screens/home_page.dart';
+import 'package:zad/home/screens/nav_bar.dart';
+import 'package:zad/home/screens/profile_page.dart';
+import 'package:zad/home/screens/track_order_page.dart';
+import 'package:zad/controllers/orders_controller.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 
 class CartPage extends StatelessWidget {
   CartPage({super.key});
@@ -51,11 +52,10 @@ class CartPage extends StatelessWidget {
               SliverAppBar(
                 iconTheme: IconThemeData(color: theme.colorScheme.onSurface),
                 expandedHeight: 150,
-
                 floating: true,
                 pinned: true,
-                backgroundColor: Colors
-                    .transparent, // جعلها شفافة لتظهر الخلفية المتدرجة بسلاسة
+                centerTitle: true,
+                backgroundColor: Colors.transparent,
                 title: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -64,7 +64,7 @@ class CartPage extends StatelessWidget {
                       style: TextStyle(
                         fontSize: 22,
                         fontWeight: FontWeight.bold,
-                        color: theme.colorScheme.onSurface, // ديناميكي
+                        color: theme.colorScheme.onSurface,
                       ),
                     ),
                     Text(
@@ -73,7 +73,7 @@ class CartPage extends StatelessWidget {
                         fontSize: 14,
                         color: theme.colorScheme.onSurface.withValues(
                           alpha: 0.7,
-                        ), // ديناميكي شفاف
+                        ),
                       ),
                     ),
                   ],
@@ -148,9 +148,7 @@ class CartPage extends StatelessWidget {
                         const SizedBox(height: 24),
                         ElevatedButton(
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: theme
-                                .colorScheme
-                                .primary, // يعتمد على لون الثيم الأساسي
+                            backgroundColor: theme.colorScheme.primary,
                             foregroundColor: theme.colorScheme.onPrimary,
                             padding: const EdgeInsets.symmetric(
                               horizontal: 32,
@@ -174,18 +172,13 @@ class CartPage extends StatelessWidget {
                     delegate: SliverChildBuilderDelegate(
                       childCount: cartItems.length,
                       (context, index) {
-                        final item = cartItems[index];
-                        final priceNum =
-                            double.tryParse(
-                              item['price'].toString().replaceAll('\$', ''),
-                            ) ??
-                            0;
-                        final itemTotal = priceNum * item['quantity'];
+                        final cartItem = cartItems[index];
+                        final product = cartItem.product;
+                        final itemTotal = product.price * cartItem.quantity;
 
                         return Container(
                           margin: const EdgeInsets.only(bottom: 12),
                           decoration: BoxDecoration(
-                            // كرت شفاف يتكيف مع الخلفية الفاتحة أو الداكنة
                             color: theme.colorScheme.onSurface.withValues(
                               alpha: 0.06,
                             ),
@@ -200,48 +193,67 @@ class CartPage extends StatelessWidget {
                             contentPadding: const EdgeInsets.all(12),
                             leading: ClipRRect(
                               borderRadius: BorderRadius.circular(12),
-                              child: Image.network(
-                                item['image'],
+
+                              child: Container(
                                 width: 70,
                                 height: 70,
-                                fit: BoxFit.cover,
-                                errorBuilder: (c, e, st) => Container(
-                                  width: 70,
-                                  height: 70,
-                                  color: theme.colorScheme.onSurface.withValues(
+                                decoration: BoxDecoration(
+                                  color: theme.colorScheme.primary.withValues(
                                     alpha: 0.1,
                                   ),
-                                  child: Icon(
-                                    Icons.image_not_supported,
-                                    color: theme.colorScheme.onSurface
-                                        .withValues(alpha: 0.4),
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                child: CachedNetworkImage(
+                                  imageUrl: product.getImageUrl(),
+                                  fit: BoxFit.cover,
+                                  placeholder: (context, url) => Center(
+                                    child: SizedBox(
+                                      width: 20,
+                                      height: 20,
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2,
+                                      ),
+                                    ),
                                   ),
+                                  errorWidget: (context, url, error) =>
+                                      Icon(Icons.broken_image_outlined),
                                 ),
                               ),
                             ),
                             title: Text(
-                              item['name'],
+                              product.name,
                               style: TextStyle(
                                 color: theme.colorScheme.onSurface,
                                 fontWeight: FontWeight.bold,
                               ),
                             ),
-                            subtitle: Text(
-                              '\$${itemTotal.toStringAsFixed(2)}',
-                              style: TextStyle(
-                                color: theme
-                                    .colorScheme
-                                    .primary, // لون السعر متناسق مع الهوية البراندية للثيم
-                                fontWeight: FontWeight.bold,
-                                fontSize: 16,
-                              ),
+                            subtitle: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  '\$${product.price.toStringAsFixed(2)}',
+                                  style: TextStyle(
+                                    color: theme.colorScheme.primary,
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 14,
+                                  ),
+                                ),
+                                Text(
+                                  'Total: \$${itemTotal.toStringAsFixed(2)}',
+                                  style: TextStyle(
+                                    color: theme.colorScheme.onSurface
+                                        .withValues(alpha: 0.7),
+                                    fontSize: 12,
+                                  ),
+                                ),
+                              ],
                             ),
                             trailing: Row(
                               mainAxisSize: MainAxisSize.min,
                               children: [
                                 IconButton(
                                   onPressed: () => cartController
-                                      .updateQuantity(item['id'], -1),
+                                      .updateQuantity(product.id, -1),
                                   icon: Icon(
                                     Icons.remove_circle_outline,
                                     color: theme.colorScheme.onSurface
@@ -249,7 +261,7 @@ class CartPage extends StatelessWidget {
                                   ),
                                 ),
                                 Text(
-                                  '${item['quantity']}',
+                                  '${cartItem.quantity}',
                                   style: TextStyle(
                                     color: theme.colorScheme.onSurface,
                                     fontWeight: FontWeight.bold,
@@ -258,19 +270,17 @@ class CartPage extends StatelessWidget {
                                 ),
                                 IconButton(
                                   onPressed: () => cartController
-                                      .updateQuantity(item['id'], 1),
+                                      .updateQuantity(product.id, 1),
                                   icon: Icon(
                                     Icons.add_circle_outline,
-                                    color: theme
-                                        .colorScheme
-                                        .primary, // استخدام لون الثيم الأساسي للزيادة
+                                    color: theme.colorScheme.primary,
                                   ),
                                 ),
                                 IconButton(
                                   onPressed: () {
-                                    cartController.removeItem(item['id']);
+                                    cartController.removeItem(product.id);
                                     recentOrdersController.removeOrder(
-                                      item['id'],
+                                      product.id,
                                     );
                                   },
                                   icon: const Icon(
@@ -325,6 +335,28 @@ class CartPage extends StatelessWidget {
                                 ),
                               ],
                             ),
+                            const SizedBox(height: 8),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Text(
+                                  'total_items'.tr,
+                                  style: TextStyle(
+                                    color: theme.colorScheme.onSurface
+                                        .withValues(alpha: 0.7),
+                                    fontSize: 14,
+                                  ),
+                                ),
+                                Text(
+                                  '${cartController.totalItems} items',
+                                  style: TextStyle(
+                                    color: theme.colorScheme.onSurface
+                                        .withValues(alpha: 0.7),
+                                    fontSize: 14,
+                                  ),
+                                ),
+                              ],
+                            ),
                             const SizedBox(height: 16),
                             SizedBox(
                               width: double.infinity,
@@ -340,6 +372,13 @@ class CartPage extends StatelessWidget {
                                   ),
                                 ),
                                 onPressed: () {
+                                  // إضافة الطلبات إلى RecentOrders عند الشراء
+                                  for (var item in cartItems) {
+                                    recentOrdersController.addOrder(
+                                      item.product,
+                                    );
+                                  }
+
                                   Get.snackbar(
                                     'Checkout',
                                     'Order placed successfully',
@@ -372,7 +411,7 @@ class CartPage extends StatelessWidget {
           onTap: (index) {
             switch (index) {
               case 0:
-                Get.offAll(() => const HomePage());
+                Get.offAll(() => HomePage());
                 break;
               case 1:
                 Get.offAll(() => FavouritesPage());

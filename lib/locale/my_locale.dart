@@ -6,8 +6,8 @@ class MyLocale implements Translations {
     // ================= ENGLISH =================
     'en': {
       // App
-      'title': 'My eSouq',
-      'my_esouq': 'My eSouq',
+      'title': 'Zad',
+      'zad': 'Zad',
 
       // ================= Home & UI =================
       'home': 'Home',
@@ -31,8 +31,8 @@ class MyLocale implements Translations {
       'see_all': 'See All',
 
       // ================= Auth =================
-      'name': 'Full Name',
-      'email': 'Email',
+      'first_name': 'First Name',
+      'last_name': 'Last Name',
       'password': 'Password',
       'password_confirm': 'Confirm Password',
       'login': 'Login',
@@ -43,11 +43,13 @@ class MyLocale implements Translations {
       'accept_terms_first': 'Accept terms first',
       'terms': 'I agree to the terms and conditions',
       'phone': 'Phone Number',
-
+      'app_description':
+          'You can find everything you need in one place. Shop with us and enjoy a seamless online shopping experience. From trendy fashion to the latest gadgets, we have it all. Start shopping now and discover amazing deals and discounts!',
+      'developed_by': 'Developed by',
       // Validation
       'email_required': 'Email is required',
       'password_required': 'Password is required',
-
+      'try_again': 'try again',
       // ================= Drawer / User =================
       'hi': 'HI',
       'guest': 'Guest',
@@ -65,6 +67,8 @@ class MyLocale implements Translations {
       // ================= Buying =================
       'subtotal': 'Subtotal',
       'total': 'Total',
+      'items': 'Items',
+      'total_items': 'Total Items',
       'delivery': 'Delivery',
       'checkout': 'Checkout',
       'your_cart_is_empty': 'Your cart is empty',
@@ -96,13 +100,14 @@ class MyLocale implements Translations {
           'No tracking data yet. You can start demo tracking from here.',
       'start_demo_tracking': 'Start Demo Tracking',
       'shipping_address': 'Shipping Address',
+      'add_to_wish_list': 'Add to Wish List',
     },
 
     // ================= ARABIC =================
     'ar': {
       // App
-      'title': 'متجرنا الإلكتروني',
-      'my_esouq': 'متجر السوق الالكتروني',
+      'title': 'متجرنا زاد الالكتروني',
+      'zad': 'زاد',
 
       // ================= Home & UI =================
       'home': 'الرئيسية',
@@ -126,8 +131,8 @@ class MyLocale implements Translations {
       'see_all': 'عرض الكل',
 
       // ================= Auth =================
-      'name': 'الاسم الكامل',
-      'email': 'البريد الإلكتروني',
+      'first_name': 'الأسم الأول',
+      'last_name': 'الأسم الأخير',
       'password': 'كلمة المرور',
       'password_confirm': 'تأكيد كلمة المرور',
       'login': 'تسجيل الدخول',
@@ -141,7 +146,9 @@ class MyLocale implements Translations {
       // Validation
       'email_required': 'البريد مطلوب',
       'password_required': 'كلمة المرور مطلوبة',
-
+      'app_description':
+          'يمكنك العثور على كل ما تحتاجه في مكان واحد. تسوق معنا واستمتع بتجربة تسوق عبر الإنترنت سلسة. من الموضة العصرية إلى أحدث الأدوات، لدينا كل شيء. ابدأ التسوق الآن واكتشف عروض وخصومات مذهلة!',
+      'try_again': 'اعادة المحاولة',
       // ================= Drawer / User =================
       'hi': 'مرحبا',
       'guest': 'ضيف',
@@ -149,6 +156,7 @@ class MyLocale implements Translations {
       'english': 'الإنجليزية',
       'arabic': 'العربية',
       'logout': 'تسجيل الخروج',
+      'developed_by': 'تم التطوير بواسطة',
 
       // ================= Items =================
       'shirts': 'القمصان',
@@ -160,6 +168,8 @@ class MyLocale implements Translations {
       // ================= Buying =================
       'subtotal': 'المجموع الفرعي',
       'total': 'المجموع',
+      'items': 'العناصر',
+      'total_items': 'إجمالي العناصر',
       'delivery': 'التوصيل',
       'checkout': 'الدفع',
       'your_cart_is_empty': 'سلتك فارغة',
@@ -189,7 +199,8 @@ class MyLocale implements Translations {
       'track_order_empty':
           'لا توجد بيانات تتبع بعد. يمكنك بدء تتبع تجريبي من هنا.',
       'start_demo_tracking': 'بدء تتبع تجريبي',
-       'shipping_address': 'عنوان الشحن',
+      'shipping_address': 'عنوان الشحن',
+      'add_to_wish_list': 'أضف إلى قائمة الرغبات',
     },
   };
 }
