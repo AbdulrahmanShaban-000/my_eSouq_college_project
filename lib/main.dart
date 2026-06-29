@@ -10,50 +10,76 @@ import 'package:zad/home/screens/profile_page.dart';
 import 'package:zad/locale/my_locale.dart';
 import 'package:zad/services/storage_service.dart';
 import 'package:zad/splash/splash_screen.dart';
-import 'package:zad/controllers/theme_controller.dart'; 
+import 'package:zad/controllers/theme_controller.dart';
 import 'package:zad/home/screens/track_order_page.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   final lang = await StorageService.getLanguage();
+  final isDark = await StorageService.getThemeMode();
 
-  runApp(MyApp(lang: lang));
+  runApp(MyApp(lang: lang, isDark: isDark));
 }
 
 class MyApp extends StatelessWidget {
   final String lang;
+  final bool isDark;
 
-  const MyApp({super.key, required this.lang});
+  const MyApp({super.key, required this.lang, required this.isDark});
 
-  
   static final ThemeData customLightTheme = ThemeData.light().copyWith(
     primaryColor: Colors.blue,
-    scaffoldBackgroundColor: Colors.grey[50], 
+    scaffoldBackgroundColor: Colors.grey[50],
     bottomNavigationBarTheme: const BottomNavigationBarThemeData(
       backgroundColor: Colors.white,
       selectedItemColor: Colors.blue,
       unselectedItemColor: Colors.black45,
     ),
+    appBarTheme: const AppBarTheme(
+      backgroundColor: Colors.white,
+      foregroundColor: Colors.black,
+      elevation: 0,
+    ),
+    // ✅ التعديل هنا: استخدام CardThemeData بدلاً من CardTheme
+    cardTheme: const CardThemeData(
+      color: Colors.white,
+      elevation: 2,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.all(Radius.circular(12)),
+      ),
+    ),
   );
 
-  // 2. تعريف الثيم الداكن بشكل صحيح خارج كتل البناء
   static final ThemeData customDarkTheme = ThemeData.dark().copyWith(
     primaryColor: Colors.blueAccent,
-    scaffoldBackgroundColor: const Color(
-      0xFF0F2027,
-    ), // نفس لون خلفية الـ Drawer والـ NavBar القديمة لتناسق التصميم
+    scaffoldBackgroundColor: const Color(0xFF0F2027),
     bottomNavigationBarTheme: const BottomNavigationBarThemeData(
       backgroundColor: Color(0xFF0F2027),
       selectedItemColor: Colors.blueAccent,
       unselectedItemColor: Colors.white54,
     ),
+    appBarTheme: const AppBarTheme(
+      backgroundColor: Color(0xFF0F2027),
+      foregroundColor: Colors.white,
+      elevation: 0,
+    ),
+    // ✅ التعديل هنا: استخدام CardThemeData بدلاً من CardTheme
+    cardTheme: const CardThemeData(
+      color: Color(0xFF1A2A3A),
+      elevation: 2,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.all(Radius.circular(12)),
+      ),
+    ),
   );
 
   @override
   Widget build(BuildContext context) {
-   
     final ThemeController themeController = Get.put(ThemeController());
+
+    // تعيين قيمة الثيم من SharedPreferences
+    themeController.isDark.value = isDark;
 
     return GetMaterialApp(
       debugShowCheckedModeBanner: false,
@@ -64,11 +90,11 @@ class MyApp extends StatelessWidget {
       fallbackLocale: const Locale('en'),
       translations: MyLocale(),
 
-     
+      // Theme configuration
       theme: customLightTheme,
       darkTheme: customDarkTheme,
 
-      
+      // Theme mode from controller
       themeMode: themeController.isDark.value
           ? ThemeMode.dark
           : ThemeMode.light,
@@ -78,11 +104,11 @@ class MyApp extends StatelessWidget {
 
       getPages: [
         GetPage(name: '/', page: () => const SplashScreen()),
-        GetPage(name: '/login', page: () => const LoginScreen()),
         GetPage(name: '/home', page: () => const HomePage()),
+        GetPage(name: '/login', page: () => const LoginScreen()),
         GetPage(name: '/profile', page: () => const ProfilePage()),
-        GetPage(name: '/cart', page: () => CartPage()),
-        GetPage(name: '/favourites', page: () => FavouritesPage()),
+        GetPage(name: '/cart', page: () =>   CartPage()),
+        GetPage(name: '/favourites', page: () =>   FavouritesPage()),
         GetPage(name: '/checkout', page: () => const CheckingOutPage()),
         GetPage(name: '/track-order', page: () => const TrackOrderPage()),
       ],

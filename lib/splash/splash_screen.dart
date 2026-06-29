@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-
 import 'package:zad/controllers/auth_controller.dart';
-import 'package:zad/auth/screens/login_screen.dart';
 import 'package:zad/home/screens/home_page.dart';
+import 'package:zad/home/screens/welcom_page.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -47,9 +46,11 @@ class _SplashScreenState extends State<SplashScreen>
 
     if (authController.isLoggedIn.value) {
       Get.offAll(() => const HomePage());
-    } else {
-      Get.offAll(() => const LoginScreen());
+    } 
+    else {
+      Get.offAll(() => const WelcomePage());
     }
+  
   }
 
   @override

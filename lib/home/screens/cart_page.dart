@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:zad/auth/screens/login_screen.dart';
+import 'package:zad/controllers/auth_controller.dart';
 import 'package:zad/controllers/cart_controller.dart';
 import 'package:zad/controllers/recent_orders_controller.dart';
 import 'package:zad/home/screens/app_drawer.dart';
@@ -17,6 +19,7 @@ class CartPage extends StatelessWidget {
   final CartController cartController = Get.find<CartController>();
   final RecentOrdersController recentOrdersController =
       Get.find<RecentOrdersController>();
+  final AuthController authController = Get.find<AuthController>();
 
   @override
   Widget build(BuildContext context) {
@@ -146,21 +149,48 @@ class CartPage extends StatelessWidget {
                           ),
                         ),
                         const SizedBox(height: 24),
-                        ElevatedButton(
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: theme.colorScheme.primary,
-                            foregroundColor: theme.colorScheme.onPrimary,
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 32,
-                              vertical: 12,
-                            ),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(25),
-                            ),
-                          ),
-                          onPressed: () => Get.toNamed('/home'),
-                          child: Text('shop_now'.tr),
-                        ),
+                        Obx(() {
+                          if (authController.isLoggedIn.value) {
+                            return ElevatedButton(
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: theme.colorScheme.primary,
+                                foregroundColor: theme.colorScheme.onPrimary,
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 32,
+                                  vertical: 12,
+                                ),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(25),
+                                ),
+                              ),
+                              onPressed: () => Get.toNamed('/home'),
+                              child: Text('shop_now'.tr),
+                            );
+                          } else {
+                            return Column(
+                              children: [
+                                ElevatedButton(
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: theme.colorScheme.primary,
+                                    foregroundColor:
+                                        theme.colorScheme.onPrimary,
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 32,
+                                      vertical: 12,
+                                    ),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(25),
+                                    ),
+                                    minimumSize: const Size(200, 45),
+                                  ),
+                                  onPressed: () =>
+                                      Get.to(() => const LoginScreen()),
+                                  child: Text('login'.tr),
+                                ),
+                              ],
+                            );
+                          }
+                        }),
                       ],
                     ),
                   ),

@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:zad/auth/screens/login_screen.dart';
+import 'package:zad/controllers/auth_controller.dart';
 import 'package:zad/controllers/cart_controller.dart';
 import 'package:zad/controllers/favourits_controller.dart';
 import 'package:zad/controllers/rating_controller.dart';
@@ -45,13 +47,12 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
   @override
   void initState() {
     super.initState();
-   
+
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _loadRatings();
     });
   }
 
- 
   Future<void> _loadRatings() async {
     try {
       final productId = widget.product.id;
@@ -78,21 +79,17 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
     );
   }
 
- 
   void _submitRating(int rating) async {
     if (rating < 0 || rating > 5) return;
 
     final productId = widget.product.id;
 
     try {
-      
       if (rating == 0) {
         if (ratingController.getUserRating(productId) == 0) return;
 
-        
         ratingController.userRatings[productId] = 0;
 
-       
         await ratingController.deleteRating(productId);
         await ratingController.fetchAverageRating(productId);
 
@@ -105,19 +102,15 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
         return;
       }
 
-    
       ratingController.userRatings[productId] = rating;
 
-     
       await ratingController.addOrUpdateRating(
         productId: productId,
         rating: rating,
       );
 
-      
       await ratingController.fetchAverageRating(productId);
 
-     
       print('✅ Rating updated for product $productId to: $rating');
 
       Get.snackbar(
@@ -127,7 +120,6 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
         colorText: Colors.white,
       );
     } catch (e) {
-    
       await ratingController.fetchUserRating(productId);
 
       Get.snackbar(
@@ -168,7 +160,7 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
                   color: theme.colorScheme.onSurface,
                 ),
               ),
-             
+
               Obx(() {
                 final avg = ratingController.getAverageRating(productId);
                 final isLoading = ratingController.isLoadingProduct(productId);
@@ -207,7 +199,6 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
 
           const SizedBox(height: 12),
 
-      
           Obx(() {
             final currentRating = ratingController.getUserRating(productId);
             final isLoading = ratingController.isLoadingProduct(productId);
@@ -324,6 +315,9 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
               ),
               actions: [
                 Obx(() {
+                  if (!Get.find<AuthController>().isLoggedIn.value) {
+                    return const SizedBox();
+                  }
                   final isFav = favouriteController.isFavourite(product.id);
                   return IconButton(
                     icon: Icon(
@@ -895,127 +889,162 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
                     const SizedBox(height: 24),
 
                     /// ADD TO CART
-                    SizedBox(
-                      width: double.infinity,
-                      height: 60,
-                      child: ElevatedButton(
-                        onPressed: product.isActive == 1 && product.stock > 0
-                            ? addToCart
-                            : null,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: theme.colorScheme.primary,
-                          foregroundColor: theme.colorScheme.onPrimary,
-                          elevation: 0,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(18),
-                          ),
-                          disabledBackgroundColor: Colors.grey.shade300,
-                        ),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
+                    Obx(() {
+                      if (!Get.find<AuthController>().isLoggedIn.value) {
+                        return Column(
                           children: [
-                            Icon(
-                              Icons.shopping_cart_checkout_rounded,
-                              color: product.isActive == 1 && product.stock > 0
-                                  ? theme.colorScheme.onPrimary
-                                  : Colors.grey.shade600,
-                              size: 24,
-                            ),
-                            const SizedBox(width: 12),
-                            Text(
-                              product.isActive == 1 && product.stock > 0
-                                  ? 'add_to_cart'.tr
-                                  : 'unavailable'.tr,
-                              style: TextStyle(
-                                color:
-                                    product.isActive == 1 && product.stock > 0
-                                    ? theme.colorScheme.onPrimary
-                                    : Colors.grey.shade600,
-                                fontSize: 18,
-                                fontWeight: FontWeight.bold,
-                                letterSpacing: 0.5,
+                            SizedBox(
+                              width: double.infinity,
+                              height: 60,
+                              child: ElevatedButton(
+                                onPressed: () =>
+                                    Get.to(() => const LoginScreen()),
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: theme.colorScheme.primary,
+                                  foregroundColor: theme.colorScheme.onPrimary,
+                                  elevation: 0,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(18),
+                                  ),
+                                ),
+                                child: Text(
+                                  'login'.tr,
+                                  style: TextStyle(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
                               ),
                             ),
+                            const SizedBox(height: 12),
+                            SizedBox(width: double.infinity, height: 55),
                           ],
-                        ),
-                      ),
-                    ),
+                        );
+                      }
 
-                    const SizedBox(height: 12),
-
-                    /// ADD TO WISH LIST
-                    SizedBox(
-                      width: double.infinity,
-                      height: 55,
-                      child: OutlinedButton(
-                        onPressed: () {
-                          if (favouriteController.isFavourite(product.id)) {
-                            Get.snackbar(
-                              'Already in Wish List',
-                              'This product is already in your wish list.',
-                              backgroundColor: Colors.orange,
-                              colorText: Colors.white,
-                              snackPosition: SnackPosition.TOP,
-                            );
-                          } else {
-                            favouriteController.addToFavourite(product);
-                            Get.snackbar(
-                              'Wish List',
-                              'Added to wish list successfully.',
-                              backgroundColor: Colors.green,
-                              colorText: Colors.white,
-                              snackPosition: SnackPosition.TOP,
-                            );
-                          }
-                        },
-                        style: OutlinedButton.styleFrom(
-                          foregroundColor: theme.colorScheme.primary,
-                          side: BorderSide(
-                            color: theme.colorScheme.primary.withOpacity(0.5),
-                            width: 1.5,
-                          ),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(18),
-                          ),
-                          padding: const EdgeInsets.symmetric(vertical: 12),
-                        ),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Obx(() {
-                              final isFav = favouriteController.isFavourite(
-                                product.id,
-                              );
-                              return Icon(
-                                isFav ? Icons.favorite : Icons.favorite_border,
-                                color: isFav
-                                    ? Colors.red.shade500
-                                    : theme.colorScheme.primary,
-                                size: 22,
-                              );
-                            }),
-                            const SizedBox(width: 10),
-                            Obx(() {
-                              final isFav = favouriteController.isFavourite(
-                                product.id,
-                              );
-                              return Text(
-                                isFav
-                                    ? 'remove_from_wish_list'.tr
-                                    : 'add_to_wish_list'.tr,
-                                style: TextStyle(
-                                  color: theme.colorScheme.primary,
-                                  fontSize: 17,
-                                  fontWeight: FontWeight.w600,
-                                  letterSpacing: 0.5,
+                      return Column(
+                        children: [
+                          SizedBox(
+                            width: double.infinity,
+                            height: 60,
+                            child: ElevatedButton(
+                              onPressed:
+                                  product.isActive == 1 && product.stock > 0
+                                  ? addToCart
+                                  : null,
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: theme.colorScheme.primary,
+                                foregroundColor: theme.colorScheme.onPrimary,
+                                elevation: 0,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(18),
                                 ),
-                              );
-                            }),
-                          ],
-                        ),
-                      ),
-                    ),
+                                disabledBackgroundColor: Colors.grey.shade300,
+                              ),
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(
+                                    Icons.shopping_cart_checkout_rounded,
+                                    color:
+                                        product.isActive == 1 &&
+                                            product.stock > 0
+                                        ? theme.colorScheme.onPrimary
+                                        : Colors.grey.shade600,
+                                    size: 24,
+                                  ),
+                                  const SizedBox(width: 12),
+                                  Text(
+                                    product.isActive == 1 && product.stock > 0
+                                        ? 'add_to_cart'.tr
+                                        : 'unavailable'.tr,
+                                    style: TextStyle(
+                                      color:
+                                          product.isActive == 1 &&
+                                              product.stock > 0
+                                          ? theme.colorScheme.onPrimary
+                                          : Colors.grey.shade600,
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.bold,
+                                      letterSpacing: 0.5,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
 
+                          const SizedBox(height: 12),
+
+                          /// ADD TO WISH LIST
+                          SizedBox(
+                            width: double.infinity,
+                            height: 55,
+                            child: OutlinedButton(
+                              onPressed: () {
+                                if (favouriteController.isFavourite(
+                                  product.id,
+                                )) {
+                                  favouriteController.removeFavourite(
+                                    product.id,
+                                  );
+                                } else {
+                                  favouriteController.addToFavourite(product);
+                                }
+                              },
+                              style: OutlinedButton.styleFrom(
+                                foregroundColor: theme.colorScheme.primary,
+                                side: BorderSide(
+                                  color: theme.colorScheme.primary.withOpacity(
+                                    0.5,
+                                  ),
+                                  width: 1.5,
+                                ),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(18),
+                                ),
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 12,
+                                ),
+                              ),
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Obx(() {
+                                    final isFav = favouriteController
+                                        .isFavourite(product.id);
+                                    return Icon(
+                                      isFav
+                                          ? Icons.favorite
+                                          : Icons.favorite_border,
+                                      color: isFav
+                                          ? Colors.red.shade500
+                                          : theme.colorScheme.primary,
+                                      size: 22,
+                                    );
+                                  }),
+                                  const SizedBox(width: 10),
+                                  Obx(() {
+                                    final isFav = favouriteController
+                                        .isFavourite(product.id);
+                                    return Text(
+                                      isFav
+                                          ? 'remove_from_wish_list'.tr
+                                          : 'add_to_wish_list'.tr,
+                                      style: TextStyle(
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.w600,
+                                        letterSpacing: 0.5,
+                                      ),
+                                    );
+                                  }),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ],
+                      );
+                    }),
                     const SizedBox(height: 30),
                   ],
                 ),

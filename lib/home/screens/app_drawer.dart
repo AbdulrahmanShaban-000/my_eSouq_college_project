@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:zad/auth/screens/login_screen.dart';
@@ -50,7 +49,6 @@ class AppDrawer extends StatelessWidget {
                         ),
                         child: Obx(() {
                           final name = authController.first_name.value;
-                         
 
                           return Column(
                             children: [
@@ -67,7 +65,6 @@ class AppDrawer extends StatelessWidget {
                                     ),
                                   ],
                                 ),
-                                
                               ),
                               const SizedBox(height: 14),
                               Text(
@@ -191,46 +188,121 @@ class AppDrawer extends StatelessWidget {
 
                       const Spacer(),
 
-                      /// LOGOUT BUTTON
-                      Padding(
-                        padding: const EdgeInsets.fromLTRB(18, 20, 18, 30),
-                        child: InkWell(
-                          borderRadius: BorderRadius.circular(18),
-                          onTap: () async {
-                            Get.back();
-                            await authController.logout();
-                            Get.offAll(() => const LoginScreen());
-                          },
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(vertical: 16),
-                            decoration: BoxDecoration(
+                      /// AUTH BUTTONS
+                      Obx(() {
+                        if (authController.isLoggedIn.value) {
+                          return Padding(
+                            padding: const EdgeInsets.fromLTRB(18, 20, 18, 30),
+                            child: InkWell(
                               borderRadius: BorderRadius.circular(18),
-                              color: Colors.redAccent.withValues(alpha: 0.12),
-                              border: Border.all(
-                                color: Colors.redAccent.withValues(alpha: 0.35),
+                              onTap: () async {
+                                Get.back();
+                                await authController.logout();
+                                Get.offAll(() => const LoginScreen());
+                              },
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 16,
+                                ),
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(18),
+                                  color: Colors.redAccent.withValues(
+                                    alpha: 0.12,
+                                  ),
+                                  border: Border.all(
+                                    color: Colors.redAccent.withValues(
+                                      alpha: 0.35,
+                                    ),
+                                  ),
+                                ),
+                                child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    const Icon(
+                                      Icons.logout,
+                                      color: Colors.redAccent,
+                                    ),
+                                    const SizedBox(width: 10),
+                                    Text(
+                                      'logout'.tr,
+                                      style: const TextStyle(
+                                        color: Colors.redAccent,
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ],
+                                ),
                               ),
                             ),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
+                          );
+                        } else {
+                          return Padding(
+                            padding: const EdgeInsets.fromLTRB(18, 20, 18, 30),
+                            child: Column(
                               children: [
-                                const Icon(
-                                  Icons.logout,
-                                  color: Colors.redAccent,
+                                SizedBox(
+                                  width: double.infinity,
+                                  child: ElevatedButton(
+                                    onPressed: () {
+                                      Get.back();
+                                      Get.to(() => const LoginScreen());
+                                    },
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor:
+                                          theme.colorScheme.primary,
+                                      padding: const EdgeInsets.symmetric(
+                                        vertical: 14,
+                                      ),
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(12),
+                                      ),
+                                    ),
+                                    child: Text(
+                                      'login'.tr,
+                                      style: TextStyle(
+                                        color: theme.colorScheme.onPrimary,
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ),
                                 ),
-                                const SizedBox(width: 10),
-                                Text(
-                                  'logout'.tr,
-                                  style: const TextStyle(
-                                    color: Colors.redAccent,
-                                    fontSize: 20,
-                                    fontWeight: FontWeight.w600,
+                                const SizedBox(height: 10),
+                                SizedBox(
+                                  width: double.infinity,
+                                  child: OutlinedButton(
+                                    onPressed: () {
+                                      Get.back();
+                                      Get.toNamed('/register');
+                                    },
+                                    style: OutlinedButton.styleFrom(
+                                      foregroundColor:
+                                          theme.colorScheme.primary,
+                                      side: BorderSide(
+                                        color: theme.colorScheme.primary,
+                                      ),
+                                      padding: const EdgeInsets.symmetric(
+                                        vertical: 14,
+                                      ),
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(12),
+                                      ),
+                                    ),
+                                    child: Text(
+                                      'register'.tr,
+                                      style: TextStyle(
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
                                   ),
                                 ),
                               ],
                             ),
-                          ),
-                        ),
-                      ),
+                          );
+                        }
+                      }),
                     ],
                   ),
                 ),

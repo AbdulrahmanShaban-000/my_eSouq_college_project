@@ -2,8 +2,10 @@ import 'package:get/get.dart';
 import 'package:zad/core/api/api_consumer.dart';
 import 'package:zad/core/api/end_points.dart';
 import 'package:zad/models/Product.dart';
+import 'package:zad/services/guest_mix.dart';
 
-class CartController extends GetxController {
+
+class CartController extends GetxController with GuestMixin {
   final ApiConsumer api;
 
   CartController() : api = Get.find<ApiConsumer>();
@@ -12,11 +14,23 @@ class CartController extends GetxController {
   var isLoading = false.obs;
   var hasError = false.obs;
   var errorMessage = ''.obs;
+  var isGuestUser = false.obs;
 
   @override
   void onInit() {
     super.onInit();
+    // التحقق من حالة المستخدم
+    _checkUserStatus();
     fetchCart();
+  }
+
+  Future<void> _checkUserStatus() async {
+    isGuestUser.value = !isLoggedIn;
+    if (isGuestUser.value) {
+      print('👤 CartController: Guest user mode');
+    } else {
+      print('👤 CartController: Registered user mode');
+    }
   }
 
   Future<void> fetchCart() async {
@@ -25,6 +39,16 @@ class CartController extends GetxController {
     errorMessage.value = '';
 
     try {
+      // إذا كان المستخدم ضيفاً، نحاول جلب السلة المحلية أو نعرض سلة فارغة
+      if (isGuestUser.value) {
+        print('👤 Fetching guest cart from local storage');
+        // يمكنك هنا جلب السلة من SharedPreferences إذا كنت تخزنها محلياً
+        // أو عرض سلة فارغة
+        cartItems.clear();
+        isLoading.value = false;
+        return;
+      }
+
       final response = await api.get(EndPoints.cart);
 
       if (response == null) {
@@ -49,16 +73,47 @@ class CartController extends GetxController {
           .map((json) => CartItem.fromJson(json))
           .toList();
     } catch (e) {
-      hasError.value = true;
-      errorMessage.value = e.toString();
-      cartItems.clear();
-      Get.snackbar('Error', errorMessage.value);
+      // إذا كان الخطأ 401 والمستخدم ضيف، نتجاهل
+      if (e.toString().contains('401') ||
+          e.toString().contains('Unauthorized')) {
+        print('👤 Guest user, ignoring 401 error');
+        cartItems.clear();
+      } else {
+        hasError.value = true;
+        errorMessage.value = e.toString();
+        cartItems.clear();
+        Get.snackbar('Error', errorMessage.value);
+      }
     } finally {
       isLoading.value = false;
     }
   }
 
   Future<bool> addToCart(Product product, [int quantity = 1]) async {
+    // إذا كان المستخدم ضيفاً، نضيف للسلة محلياً
+    if (isGuestUser.value) {
+      print('👤 Adding to guest cart locally');
+      final existingIndex = cartItems.indexWhere(
+        (item) => item.product.id == product.id,
+      );
+
+      if (existingIndex >= 0) {
+        cartItems[existingIndex].quantity += quantity;
+      } else {
+        cartItems.add(CartItem(product: product, quantity: quantity));
+      }
+      cartItems.refresh();
+
+      Get.snackbar(
+        'Added to cart',
+        '${product.name} added to cart',
+        snackPosition: SnackPosition.BOTTOM,
+        duration: const Duration(seconds: 2),
+      );
+      return true;
+    }
+
+    // للمستخدم المسجل
     isLoading.value = true;
     try {
       final response = await api.post(
@@ -110,6 +165,23 @@ class CartController extends GetxController {
   }
 
   Future<void> removeItem(int productId) async {
+    // إذا كان المستخدم ضيفاً، نحذف محلياً
+    if (isGuestUser.value) {
+      final index = cartItems.indexWhere(
+        (item) => item.product.id == productId,
+      );
+      if (index != -1) {
+        cartItems.removeAt(index);
+        cartItems.refresh();
+        Get.snackbar(
+          'Removed',
+          'Item removed from cart',
+          snackPosition: SnackPosition.BOTTOM,
+        );
+      }
+      return;
+    }
+
     final index = cartItems.indexWhere((item) => item.product.id == productId);
     if (index == -1) return;
 
@@ -144,6 +216,13 @@ class CartController extends GetxController {
 
     if (newQuantity <= 0) {
       await removeItem(productId);
+      return;
+    }
+
+    // إذا كان المستخدم ضيفاً، نحدث محلياً
+    if (isGuestUser.value) {
+      cartItems[index].quantity = newQuantity;
+      cartItems.refresh();
       return;
     }
 
@@ -186,6 +265,18 @@ class CartController extends GetxController {
   }
 
   Future<void> clearCart() async {
+    // إذا كان المستخدم ضيفاً، نمسح محلياً
+    if (isGuestUser.value) {
+      cartItems.clear();
+      cartItems.refresh();
+      Get.snackbar(
+        'Cart cleared',
+        'All items removed from cart',
+        snackPosition: SnackPosition.BOTTOM,
+      );
+      return;
+    }
+
     try {
       isLoading.value = true;
       await api.delete(EndPoints.cart);
@@ -203,6 +294,36 @@ class CartController extends GetxController {
     }
   }
 
+  // ✅ دالة لدمج السلة المحلية مع السلة على الخادم بعد تسجيل الدخول
+  Future<void> mergeGuestCart() async {
+    if (cartItems.isEmpty || !isLoggedIn) return;
+
+    print('🔄 Merging guest cart with server cart');
+    isLoading.value = true;
+
+    try {
+      for (var item in cartItems) {
+        await api.post(
+          EndPoints.cart,
+          data: {'product_id': item.product.id, 'quantity': item.quantity},
+        );
+      }
+      // بعد الدمج، نمسح السلة المحلية
+      cartItems.clear();
+      // نجلب السلة من الخادم
+      await fetchCart();
+      Get.snackbar(
+        'Success',
+        'Cart merged successfully',
+        snackPosition: SnackPosition.BOTTOM,
+      );
+    } catch (e) {
+      print('Error merging cart: $e');
+    } finally {
+      isLoading.value = false;
+    }
+  }
+
   double get subtotal {
     return cartItems.fold(
       0.0,
@@ -214,7 +335,6 @@ class CartController extends GetxController {
     return cartItems.fold(0, (sum, item) => sum + item.quantity);
   }
 
-  
   List<Map<String, dynamic>> get cartAsMapList {
     return cartItems.map((item) {
       return {
@@ -227,8 +347,17 @@ class CartController extends GetxController {
       };
     }).toList();
   }
-}
 
+  // ✅ دالة لتحديث حالة المستخدم
+  Future<void> refreshUserStatus() async {
+    final loggedIn = await checkLoginStatus();
+    isGuestUser.value = !loggedIn;
+    if (loggedIn) {
+      // إذا كان المستخدم مسجلاً، نجلب السلة من الخادم
+      await fetchCart();
+    }
+  }
+}
 
 class CartItem {
   final int? id;
@@ -285,7 +414,6 @@ class CartItem {
 
   double get totalPrice => product.price * quantity;
 
-  
   Map<String, dynamic> toMap() {
     return {'id': id, 'product_id': product.id, 'quantity': quantity};
   }

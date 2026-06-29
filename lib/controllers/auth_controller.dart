@@ -15,7 +15,6 @@ class AuthController extends GetxController {
   var first_name = ''.obs;
   var phone = ''.obs;
   var last_name = ''.obs;
-  // أضف هذا السطر
   var errorMessage = ''.obs;
 
   @override
@@ -31,6 +30,36 @@ class AuthController extends GetxController {
 
   Future<void> _loadLoginStatus() async {
     isLoggedIn.value = await StorageService.isLoggedIn();
+  }
+
+  // ✅ دالة للتحقق من وجود Token صالح (متزامنة)
+  bool get hasValidToken {
+    if (!isLoggedIn.value) return false;
+    // نستخدم getToken() مع Future
+    // لكن لا يمكن استخدام await في getter
+    // لذا نستخدم طريقة مختلفة
+    return false; // سيتم تعديلها
+  }
+
+  // ✅ دالة للحصول على Token بشكل صحيح (غير متزامنة)
+  Future<String?> getToken() async {
+    if (!isLoggedIn.value) return null;
+    return await StorageService.getToken();
+  }
+
+  // ✅ دالة للتحقق من وجود Token صالح (غير متزامنة)
+  Future<bool> checkValidToken() async {
+    if (!isLoggedIn.value) return false;
+    final token = await StorageService.getToken();
+    return token != null && token.isNotEmpty;
+  }
+
+  // ✅ دالة لتحديث حالة المستخدم
+  Future<void> refreshAuthStatus() async {
+    isLoggedIn.value = await StorageService.isLoggedIn();
+    if (isLoggedIn.value) {
+      await loadUser();
+    }
   }
 
   Future<void> setUser({
@@ -90,11 +119,6 @@ class AuthController extends GetxController {
         return false;
       }
 
-    
-      if (response[ApiKeys.token] == null) {
-        print('Register warning: missing token. response=$response');
-      }
-
       final user = UserModel.fromJson(response['user']);
 
       await setUser(
@@ -103,14 +127,13 @@ class AuthController extends GetxController {
         phone: user.mobileNumber,
       );
 
-      final token = response[ApiKeys.token]?.toString();
+      final token = response['token']?.toString();
       if (token != null && token.isNotEmpty) {
         await StorageService.saveToken(token);
         print('token saved: $token');
       }
 
       await login();
-
       return true;
     } catch (e) {
       if (e is ServerException) {
@@ -148,20 +171,16 @@ class AuthController extends GetxController {
 
       final user = UserModel.fromJson(response['user']);
 
-      final token = response[ApiKeys.token]?.toString();
-      if (token == null || token.isEmpty) {
-       
-        print('Login warning: missing/empty token. response=$response');
-      }
+      final token = response['token']?.toString();
       if (token != null && token.isNotEmpty) {
         try {
           print('Validating token: $token');
-          
           JwtDecoder.decode(token);
-      
         } catch (_) {
-          
+          print('Token validation warning');
         }
+        await StorageService.saveToken(token);
+        print('Token saved successfully');
       }
 
       await setUser(
@@ -170,14 +189,7 @@ class AuthController extends GetxController {
         phone: user.mobileNumber,
       );
 
-      if (token != null && token.isNotEmpty) {
-        await StorageService.saveToken(token);
-      }
-
-      // If your API returns user id as a claim, save it here.
-      // Current StorageService doesn't have saveId(), so we skip it safely.
       await login();
-
       return true;
     } catch (e) {
       if (e is ServerException) {
@@ -185,7 +197,6 @@ class AuthController extends GetxController {
       } else {
         errorMessage.value = 'حدث خطأ غير متوقع';
       }
-
       print('Login Error: $e');
       return false;
     }
@@ -194,14 +205,15 @@ class AuthController extends GetxController {
   Future<void> logout() async {
     try {
       await api.post(EndPoints.logout);
-      
     } catch (e) {
       print('Logout Error: $e');
     }
 
     final lang = await StorageService.getLanguage();
 
+    // حذف جميع بيانات المستخدم بما في ذلك Token
     await StorageService.logout();
+    await StorageService.deleteToken();
     await StorageService.setLanguage(lang);
 
     isLoggedIn.value = false;

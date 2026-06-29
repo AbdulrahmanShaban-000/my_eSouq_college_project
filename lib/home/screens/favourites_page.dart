@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:zad/auth/screens/login_screen.dart';
+import 'package:zad/controllers/auth_controller.dart';
 import 'package:zad/controllers/cart_controller.dart';
 import 'package:zad/controllers/favourits_controller.dart';
 import 'package:zad/controllers/theme_controller.dart';
@@ -17,7 +19,7 @@ class FavouritesPage extends StatelessWidget {
       Get.find<FavouriteController>();
   final CartController cartController = Get.find<CartController>();
   final ThemeController themeController = Get.find<ThemeController>();
-
+final AuthController authController = Get.find<AuthController>();
   void addToCart(Product item) {
     cartController.addToCart(item, 1);
     Get.snackbar(
@@ -32,11 +34,9 @@ class FavouritesPage extends StatelessWidget {
     );
   }
 
-  
   Widget _buildProductImage(Product item, ThemeData theme, bool isDark) {
     final imageUrl = item.getImageUrl();
 
-   
     print('🔍 Product: ${item.name}');
     print('📸 Image URL: $imageUrl');
     print('━━━━━━━━━━━━━━━━━━━━');
@@ -66,7 +66,6 @@ class FavouritesPage extends StatelessWidget {
             ),
           ),
           errorWidget: (context, url, error) {
-           
             print('❌ Error loading image: $url');
             print('Error: $error');
             return Column(
@@ -304,40 +303,76 @@ class FavouritesPage extends StatelessWidget {
                               ),
                             ],
                           ),
-                          child: ElevatedButton(
-                            onPressed: () => Get.toNamed('/home'),
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.transparent,
-                              foregroundColor: Colors.white,
-                              elevation: 0,
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 32,
-                                vertical: 16,
-                              ),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(16),
-                              ),
-                            ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                const Icon(
-                                  Icons.shopping_bag_outlined,
-                                  color: Colors.white,
-                                  size: 20,
-                                ),
-                                const SizedBox(width: 10),
-                                Text(
-                                  'Browse Products'.tr,
-                                  style: const TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.bold,
-                                    color: Colors.white,
+                          child: Obx(() {
+                            if (authController.isLoggedIn.value) {
+                              return ElevatedButton(
+                                onPressed: () => Get.toNamed('/home'),
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: Colors.transparent,
+                                  foregroundColor: Colors.white,
+                                  elevation: 0,
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 32,
+                                    vertical: 16,
+                                  ),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(16),
                                   ),
                                 ),
-                              ],
-                            ),
-                          ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    const Icon(
+                                      Icons.shopping_bag_outlined,
+                                      color: Colors.white,
+                                      size: 20,
+                                    ),
+                                    const SizedBox(width: 10),
+                                    Text(
+                                      'browse_products'.tr,
+                                      style: const TextStyle(
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.white,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              );
+                            } else {
+                              return Padding(
+                                padding: const EdgeInsets.all(2.0),
+                                child: Column(
+                                  children: [
+                                    ElevatedButton(
+                                      onPressed: () =>
+                                          Get.to(() => const LoginScreen()),
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor: Color(0xFFAABB),
+                                        foregroundColor: Colors.white,
+                                        elevation: 0,
+
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.circular(
+                                            16,
+                                          ),
+                                        ),
+                                        minimumSize: const Size(50, 50),
+                                      ),
+                                      child: Text(
+                                        'login'.tr,
+                                        style: const TextStyle(
+                                          fontSize: 25,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                    ),
+                                    const SizedBox(height: 12),
+                                  ],
+                                ),
+                              );
+                            }
+                          }),
                         ),
                       ],
                     ),
@@ -380,7 +415,6 @@ class FavouritesPage extends StatelessWidget {
                             padding: const EdgeInsets.all(12),
                             child: Row(
                               children: [
-                             
                                 _buildProductImage(item, theme, isDark),
 
                                 const SizedBox(width: 14),

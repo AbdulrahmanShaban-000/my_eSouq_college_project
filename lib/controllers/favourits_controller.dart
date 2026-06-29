@@ -3,8 +3,10 @@ import 'package:zad/core/api/api_consumer.dart';
 import 'package:zad/core/api/end_points.dart';
 import 'package:zad/models/Product.dart';
 import 'package:dio/dio.dart';
+import 'package:zad/services/guest_mix.dart';
 
-class FavouriteController extends GetxController {
+
+class FavouriteController extends GetxController with GuestMixin {
   final ApiConsumer api;
 
   FavouriteController() : api = Get.find<ApiConsumer>();
@@ -19,6 +21,12 @@ class FavouriteController extends GetxController {
   }
 
   Future<void> fetchFavourites() async {
+    // ✅ إذا كان المستخدم ضيفاً، نعرض قائمة فارغة
+    if (!isLoggedIn) {
+      favourites.clear();
+      return;
+    }
+
     try {
       isLoading.value = true;
 
@@ -59,6 +67,16 @@ class FavouriteController extends GetxController {
   }
 
   Future<void> addToFavouriteByProductId(int productId) async {
+    // ✅ إذا كان المستخدم ضيفاً، نعرض رسالة
+    if (!isLoggedIn) {
+      Get.snackbar(
+        'Login Required',
+        'Please login to add to favourites',
+        snackPosition: SnackPosition.BOTTOM,
+      );
+      return;
+    }
+
     try {
       final response = await api.post(
         EndPoints.favourites,
@@ -87,6 +105,16 @@ class FavouriteController extends GetxController {
   }
 
   Future<void> removeFavourite(int productId) async {
+    // ✅ إذا كان المستخدم ضيفاً، نعرض رسالة
+    if (!isLoggedIn) {
+      Get.snackbar(
+        'Login Required',
+        'Please login to remove from favourites',
+        snackPosition: SnackPosition.BOTTOM,
+      );
+      return;
+    }
+
     try {
       await api.delete('${EndPoints.favourites}/$productId');
       Get.snackbar('Removed', 'Product removed from favourites');
@@ -101,6 +129,16 @@ class FavouriteController extends GetxController {
   }
 
   Future<void> clearAll() async {
+    // ✅ إذا كان المستخدم ضيفاً، نعرض رسالة
+    if (!isLoggedIn) {
+      Get.snackbar(
+        'Login Required',
+        'Please login to manage favourites',
+        snackPosition: SnackPosition.BOTTOM,
+      );
+      return;
+    }
+
     await fetchFavourites();
     favourites.clear();
   }

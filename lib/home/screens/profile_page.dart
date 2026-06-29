@@ -414,20 +414,44 @@ class _ProfilePageState extends State<ProfilePage> {
                       ),
                       height: 1,
                     ),
-                    ListTile(
-                      leading: const Icon(
-                        Icons.logout,
-                        color: Colors.redAccent,
-                      ),
-                      title: Text(
-                        'logout'.tr,
-                        style: const TextStyle(color: Colors.redAccent),
-                      ),
-                      onTap: () async {
-                        await authController.logout();
-                        Get.offAll(() => const LoginScreen());
-                      },
-                    ),
+                    Obx(() {
+                      if (authController.isLoggedIn.value) {
+                        return ListTile(
+                          leading: const Icon(
+                            Icons.logout,
+                            color: Colors.redAccent,
+                          ),
+                          title: Text(
+                            'logout'.tr,
+                            style: const TextStyle(color: Colors.redAccent),
+                          ),
+                          onTap: () async {
+                            await authController.logout();
+                            Get.offAll(() => const LoginScreen());
+                          },
+                        );
+                      } else {
+                        return Column(
+                          children: [
+                            ListTile(
+                              leading: Icon(
+                                Icons.login,
+                                color: theme.colorScheme.primary,
+                              ),
+                              title: Text(
+                                'login'.tr,
+                                style: TextStyle(
+                                  color: theme.colorScheme.primary,
+                                ),
+                              ),
+                              onTap: () {
+                                Get.to(() => const LoginScreen());
+                              },
+                            ),
+                          ],
+                        );
+                      }
+                    }),
                   ],
                 ),
               ),
@@ -442,7 +466,7 @@ class _ProfilePageState extends State<ProfilePage> {
         onTap: (index) {
           switch (index) {
             case 0:
-              Get.offAll(() =>   HomePage());
+              Get.offAll(() => HomePage());
               break;
             case 1:
               Get.offAll(() => FavouritesPage());

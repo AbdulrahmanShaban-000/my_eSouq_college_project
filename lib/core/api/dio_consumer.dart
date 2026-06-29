@@ -10,6 +10,10 @@ class DioConsumer extends ApiConsumer {
   DioConsumer(this.dio) {
     dio.options.connectTimeout = const Duration(seconds: 10);
     dio.options.receiveTimeout = const Duration(seconds: 10);
+    dio.options.headers = {
+      'Accept': 'application/json',
+      'Content-Type': 'application/json',
+    };
     dio.options.baseUrl = EndPoints.baseUrl;
     dio.interceptors.add(ApiInterceptor());
     dio.interceptors.add(
@@ -53,7 +57,7 @@ class DioConsumer extends ApiConsumer {
     try {
       final response = await dio.post(
         url,
-        data:  isFormData ? FormData.fromMap(data) : data,
+        data: isFormData ? FormData.fromMap(data) : data,
         queryParameters: queryParameters,
       );
       return response.data;

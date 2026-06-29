@@ -13,6 +13,7 @@ class MyLocale implements Translations {
       'home': 'Home',
       'categories': 'Categories',
       'settings': 'Settings',
+      'browse_products': 'Browse Products',
       'cart': 'Cart',
       'profile': 'Profile',
       'all': 'All',
@@ -63,7 +64,8 @@ class MyLocale implements Translations {
       'trousers': 'Trousers',
       'shoes': 'Shoes',
       'accessories': 'Accessories',
-
+      'remove_from_wish_list': 'Remove from Wish List',
+      's_w_r': 'Oops! Something went wrong',
       // ================= Buying =================
       'subtotal': 'Subtotal',
       'total': 'Total',
@@ -113,6 +115,7 @@ class MyLocale implements Translations {
       'home': 'الرئيسية',
       'categories': 'التصنيفات',
       'settings': 'الإعدادات',
+      'browse_products': 'تصفح المنتجات',
       'cart': 'السلة',
       'profile': 'الحساب',
       'all': 'الكل',
@@ -164,7 +167,8 @@ class MyLocale implements Translations {
       'shoes': 'الحذاء',
       'accessories': 'الأكسسوارات',
       'edit_profile': 'تعديل الملف الشخصي',
-
+      'remove_from_wish_list': 'إزالة من قائمة الرغبات',
+      's_w_r': 'عذراً! حدث خطأ ما',
       // ================= Buying =================
       'subtotal': 'المجموع الفرعي',
       'total': 'المجموع',

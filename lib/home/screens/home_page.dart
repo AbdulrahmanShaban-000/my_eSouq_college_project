@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:zad/controllers/auth_controller.dart';
 import 'package:zad/controllers/favourits_controller.dart';
 import 'package:zad/controllers/product_controller.dart';
 import 'package:zad/controllers/cart_controller.dart';
@@ -39,14 +40,12 @@ class _HomePageState extends State<HomePage> {
     });
   }
 
- 
   Future<void> _loadAllRatings() async {
     final products = productController.products;
     if (products.isEmpty) return;
 
     print('🔄 Loading ratings for ${products.length} products...');
 
-   
     for (final product in products) {
       await ratingController.fetchAverageRating(product.id);
       await ratingController.fetchUserRating(product.id);
@@ -395,7 +394,6 @@ class _HomePageState extends State<HomePage> {
           crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisSize: MainAxisSize.min,
           children: [
-            
             Expanded(
               flex: 6,
               child: ClipRRect(
@@ -405,7 +403,6 @@ class _HomePageState extends State<HomePage> {
                 child: Stack(
                   fit: StackFit.expand,
                   children: [
-                   
                     Hero(
                       tag: 'product_${product.id}',
                       child: CachedNetworkImage(
@@ -440,7 +437,6 @@ class _HomePageState extends State<HomePage> {
                       ),
                     ),
 
-              
                     Positioned.fill(
                       child: IgnorePointer(
                         child: DecoratedBox(
@@ -545,12 +541,10 @@ class _HomePageState extends State<HomePage> {
                       ),
                     ),
 
-                   
                     Positioned(
                       top: 16,
                       left: 16,
                       child: Obx(() {
-                       
                         final avg = ratingController.getAverageRating(
                           product.id,
                         );
@@ -632,11 +626,14 @@ class _HomePageState extends State<HomePage> {
                       }),
                     ),
 
-                   
                     Positioned(
                       top: 12,
                       right: 12,
                       child: Obx(() {
+                        if (!Get.find<AuthController>().isLoggedIn.value) {
+                          return const SizedBox();
+                        }
+
                         final isFav = favouriteController.isFavourite(
                           product.id,
                         );
@@ -676,7 +673,6 @@ class _HomePageState extends State<HomePage> {
                       }),
                     ),
 
-                  
                     if (inStock && product.stock < 10)
                       Positioned(
                         top: 12,
@@ -771,7 +767,6 @@ class _HomePageState extends State<HomePage> {
 
                     Row(
                       children: [
-                      
                         Expanded(
                           child: Container(
                             padding: const EdgeInsets.symmetric(
@@ -931,7 +926,7 @@ class _HomePageState extends State<HomePage> {
               ),
               const SizedBox(height: 16),
               Text(
-                'Oops! Something went wrong',
+                's_w_r'.tr,
                 style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
@@ -961,7 +956,7 @@ class _HomePageState extends State<HomePage> {
                 ),
                 icon: const Icon(Icons.refresh_rounded, color: Colors.white),
                 label: Text(
-                  'Try Again',
+                  'try_again'.tr,
                   style: TextStyle(
                     color: Colors.white,
                     fontSize: 16,

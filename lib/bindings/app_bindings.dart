@@ -35,11 +35,6 @@ Get.put<ApiConsumer>(DioConsumer(Dio()), permanent: true);
     Get.put<CategoriesController>(CategoriesController(), permanent: true);
 
 
-
-
-    
-
-    // ProfileController requires AuthController.
     Get.put(
       ProfileController(authController: Get.find<AuthController>()),
       permanent: true,
