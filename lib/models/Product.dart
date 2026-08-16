@@ -1,5 +1,3 @@
-// Model for Product and its images (from API JSON)
-
 import 'package:zad/core/api/end_points.dart';
 
 class ProductImage {
@@ -70,10 +68,14 @@ class Product {
   final String? sku;
   final String? slug;
   final List<ProductImage> images;
+  final List<int> categoryIds;
+
+  int get categoryId => categoryIds.isNotEmpty ? categoryIds.first : 0;
 
   Product({
     required this.id,
     required this.name,
+    this.categoryIds = const [],
     this.description,
     required this.price,
     required this.stock,
@@ -83,19 +85,15 @@ class Product {
     this.images = const [],
   });
 
-  // ✅ دالة محسنة للحصول على رابط الصورة مع دعم fallback
   String getImageUrl() {
-    
     for (final image in images) {
       final path = image.imagePath.trim();
       if (path.isNotEmpty && path != '') return path;
     }
 
-
     return 'https://via.placeholder.com/300x300?text=No+Image';
   }
 
-  
   bool hasValidImage() {
     if (images.isNotEmpty) {
       final firstImage = images.first.imagePath.trim();
@@ -106,6 +104,77 @@ class Product {
 
   bool hasImage() {
     return images.isNotEmpty && images.first.imagePath.isNotEmpty;
+  }
+
+  static List<int> _extractCategoryIds(Map<String, dynamic> json) {
+    final ids = <int>{};
+
+    void addId(dynamic value) {
+      if (value == null) return;
+
+      if (value is num) {
+        ids.add(value.toInt());
+        return;
+      }
+
+      if (value is String) {
+        final parsed = int.tryParse(value);
+        if (parsed != null) ids.add(parsed);
+        return;
+      }
+
+      if (value is Map) {
+        final map = Map<String, dynamic>.from(value);
+        final rawId =
+            map['id'] ??
+            map['category_id'] ??
+            map['categoryId'] ??
+            map['cat_id'];
+
+        if (rawId != null) {
+          if (rawId is num) {
+            ids.add(rawId.toInt());
+          } else if (rawId is String) {
+            final parsed = int.tryParse(rawId);
+            if (parsed != null) ids.add(parsed);
+          }
+        }
+        return;
+      }
+
+      if (value is List) {
+        for (final item in value) {
+          addId(item);
+        }
+      }
+    }
+
+    final candidates = [
+      json['category_id'],
+      json['categoryId'],
+      json['cat_id'],
+      json['category'],
+      json['categories'],
+      json['category_ids'],
+      json['categories_ids'],
+    ];
+
+    for (final candidate in candidates) {
+      addId(candidate);
+    }
+
+    if (ids.isEmpty && json['data'] is Map) {
+      final data = json['data'] as Map<String, dynamic>;
+      for (final candidate in [
+        data['category_id'],
+        data['category'],
+        data['categories'],
+      ]) {
+        addId(candidate);
+      }
+    }
+
+    return ids.toList();
   }
 
   factory Product.fromJson(Map<String, dynamic> json) {
@@ -176,6 +245,11 @@ class Product {
       sku: json['sku']?.toString(),
       slug: json['slug']?.toString(),
       images: parsedImages,
+      categoryIds: _extractCategoryIds(json),
     );
   }
 }
+
+/*
+
+*/

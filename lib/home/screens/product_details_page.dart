@@ -31,18 +31,7 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
       Get.find<RecentOrdersController>();
   final RatingController ratingController = Get.find<RatingController>();
 
-  final RxInt selectedSize = 0.obs;
-  final RxInt selectedColor = 0.obs;
   final RxInt quantity = 1.obs;
-
-  final List<String> sizes = ['S', 'M', 'L', 'XL', 'XXL'];
-
-  final List<Map<String, dynamic>> colors = [
-    {'name': 'Blue', 'color': Colors.blue},
-    {'name': 'Black', 'color': Colors.black},
-    {'name': 'White', 'color': Colors.white},
-    {'name': 'Green', 'color': Colors.green},
-  ];
 
   @override
   void initState() {
@@ -69,14 +58,6 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
   void addToCart() {
     cartController.addToCart(widget.product, quantity.value);
     recentOrdersController.addOrder(widget.product);
-
-    Get.snackbar(
-      'cart_title'.tr,
-      'Added successfully',
-      backgroundColor: Colors.green,
-      colorText: Colors.white,
-      snackPosition: SnackPosition.TOP,
-    );
   }
 
   void _submitRating(int rating) async {
@@ -93,12 +74,6 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
         await ratingController.deleteRating(productId);
         await ratingController.fetchAverageRating(productId);
 
-        Get.snackbar(
-          'Rating',
-          'تم إلغاء التقييم',
-          backgroundColor: Colors.orange,
-          colorText: Colors.white,
-        );
         return;
       }
 
@@ -112,13 +87,6 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
       await ratingController.fetchAverageRating(productId);
 
       print('✅ Rating updated for product $productId to: $rating');
-
-      Get.snackbar(
-        'Rating',
-        'تم حفظ التقييم بنجاح',
-        backgroundColor: Colors.green,
-        colorText: Colors.white,
-      );
     } catch (e) {
       await ratingController.fetchUserRating(productId);
 
@@ -131,7 +99,6 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
     }
   }
 
-  // ✅ Widget التقييم المحسن
   Widget _buildRatingSection(ThemeData theme, bool isDark) {
     final productId = widget.product.id;
 
@@ -148,7 +115,6 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // العنوان والمتوسط
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
@@ -229,9 +195,8 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
 
           const SizedBox(height: 8),
 
-          // ✅ نص تعليمي محسن
           Obx(() {
-            final currentRating = ratingController.getUserRating(productId);
+            // final currentRating = ratingController.getUserRating(productId);
             final isLoading = ratingController.isLoadingProduct(productId);
 
             if (isLoading) {
@@ -242,9 +207,7 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
 
             return Center(
               child: Text(
-                currentRating > 0
-                    ? '⭐ تقييمك: $currentRating من 5'
-                    : '👆 اضغط على النجمة لتقييم المنتج',
+                'rate'.tr,
                 style: TextStyle(
                   fontSize: 13,
                   color: theme.colorScheme.onSurface.withOpacity(0.6),
@@ -254,7 +217,6 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
             );
           }),
 
-          // ✅ زر إلغاء التقييم
           Obx(() {
             if (ratingController.getUserRating(productId) > 0 &&
                 !ratingController.isLoadingProduct(productId)) {
@@ -262,7 +224,7 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
                 child: TextButton(
                   onPressed: () => _submitRating(0),
                   child: Text(
-                    '🗑️ إلغاء تقييمي',
+                    'rmr'.tr,
                     style: TextStyle(color: Colors.red.shade400, fontSize: 12),
                   ),
                 ),
@@ -618,157 +580,56 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
                       ),
 
                     const SizedBox(height: 24),
-
-                    /// SIZE
-                    if (sizes.isNotEmpty) ...[
-                      Text(
-                        'Select Size',
-                        style: TextStyle(
-                          color: theme.colorScheme.onSurface,
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
+                    Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: theme.colorScheme.onSurface.withOpacity(0.05),
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(
+                          color: theme.colorScheme.onSurface.withOpacity(0.1),
+                          width: 1,
                         ),
                       ),
-                      const SizedBox(height: 10),
-                      Obx(
-                        () => Wrap(
-                          spacing: 10,
-                          runSpacing: 10,
-                          children: List.generate(sizes.length, (i) {
-                            final selected = selectedSize.value == i;
-                            return GestureDetector(
-                              onTap: () => selectedSize.value = i,
-                              child: Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 20,
-                                  vertical: 10,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: selected
-                                      ? theme.colorScheme.primary
-                                      : theme.colorScheme.onSurface.withOpacity(
-                                          0.05,
-                                        ),
-                                  borderRadius: BorderRadius.circular(14),
-                                  border: Border.all(
-                                    color: selected
-                                        ? Colors.transparent
-                                        : theme.colorScheme.onSurface
-                                              .withOpacity(0.1),
-                                    width: 2,
-                                  ),
-                                  boxShadow: selected
-                                      ? [
-                                          BoxShadow(
-                                            color: theme.colorScheme.primary
-                                                .withOpacity(0.3),
-                                            blurRadius: 10,
-                                            offset: const Offset(0, 4),
-                                          ),
-                                        ]
-                                      : null,
-                                ),
-                                child: Text(
-                                  sizes[i],
-                                  style: TextStyle(
-                                    color: selected
-                                        ? theme.colorScheme.onPrimary
-                                        : theme.colorScheme.onSurface,
-                                    fontWeight: selected
-                                        ? FontWeight.bold
-                                        : FontWeight.normal,
-                                    fontSize: 15,
-                                  ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Notes',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                              color: theme.colorScheme.onSurface,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          TextField(
+                            maxLines: null,
+                            keyboardType: TextInputType.multiline,
+                            style: TextStyle(
+                              color: theme.colorScheme.onSurface.withOpacity(
+                                0.8,
+                              ),
+                              height: 1.6,
+                              fontSize: 15,
+                            ),
+                            decoration: InputDecoration(
+                              hintText: 'rnh'.tr,
+                              hintStyle: TextStyle(
+                                color: theme.colorScheme.onSurface.withOpacity(
+                                  0.4,
                                 ),
                               ),
-                            );
-                          }),
-                        ),
+                              border: InputBorder.none,
+                              enabledBorder: InputBorder.none,
+                              focusedBorder: InputBorder.none,
+                              isDense: true,
+                              contentPadding: EdgeInsets.zero,
+                            ),
+                          ),
+                        ],
                       ),
-                      const SizedBox(height: 24),
-                    ],
-
-                    /// COLOR
-                    if (colors.isNotEmpty) ...[
-                      Text(
-                        'Select Color',
-                        style: TextStyle(
-                          color: theme.colorScheme.onSurface,
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      const SizedBox(height: 10),
-                      Obx(
-                        () => Wrap(
-                          spacing: 12,
-                          runSpacing: 12,
-                          children: List.generate(colors.length, (i) {
-                            final selected = selectedColor.value == i;
-                            return GestureDetector(
-                              onTap: () => selectedColor.value = i,
-                              child: Column(
-                                children: [
-                                  Container(
-                                    width: 40,
-                                    height: 40,
-                                    decoration: BoxDecoration(
-                                      color: colors[i]['color'],
-                                      shape: BoxShape.circle,
-                                      border: Border.all(
-                                        color: selected
-                                            ? (colors[i]['name'] == 'White' &&
-                                                      !isDark
-                                                  ? Colors.black
-                                                  : theme.colorScheme.onSurface)
-                                            : Colors.transparent,
-                                        width: 3,
-                                      ),
-                                      boxShadow: selected
-                                          ? [
-                                              BoxShadow(
-                                                color: theme.colorScheme.primary
-                                                    .withOpacity(0.4),
-                                                blurRadius: 12,
-                                                spreadRadius: 2,
-                                              ),
-                                            ]
-                                          : null,
-                                    ),
-                                    child: selected
-                                        ? Icon(
-                                            Icons.check,
-                                            color:
-                                                colors[i]['name'] == 'White' &&
-                                                    !isDark
-                                                ? Colors.black
-                                                : Colors.white,
-                                            size: 20,
-                                          )
-                                        : null,
-                                  ),
-                                  const SizedBox(height: 4),
-                                  Text(
-                                    colors[i]['name'],
-                                    style: TextStyle(
-                                      fontSize: 11,
-                                      color: selected
-                                          ? theme.colorScheme.primary
-                                          : theme.colorScheme.onSurface
-                                                .withOpacity(0.5),
-                                      fontWeight: selected
-                                          ? FontWeight.bold
-                                          : FontWeight.normal,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            );
-                          }),
-                        ),
-                      ),
-                      const SizedBox(height: 24),
-                    ],
+                    ),
+                    SizedBox(height: 24),
 
                     /// QUANTITY & TOTAL
                     Obx(() {

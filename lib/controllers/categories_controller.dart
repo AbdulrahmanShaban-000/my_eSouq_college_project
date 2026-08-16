@@ -1,62 +1,92 @@
-// lib/controllers/categories_controller.dart
-
 import 'package:get/get.dart';
-import 'package:zad/services/categories_service.dart';
+import 'package:zad/core/api/api_consumer.dart';
+import 'package:zad/models/categories.dart'; 
+import 'package:zad/models/Product.dart'; 
 
-class CategoriesController extends GetxController {
-  // // حقن خدمة الـ CategoriesService
-  // final CategoriesService _categoriesService = Get.find<CategoriesService>();
+class CategoryController extends GetxController {
+  final ApiConsumer api;
 
-  // // متغيرات الحالة (State)
-  // final RxList<Category> categoriesList = <Category>[].obs;
-  // final RxBool isLoading = false.obs;
-  // final RxString errorMessage = ''.obs;
+  CategoryController() : api = Get.find<ApiConsumer>();
 
-  // @override
-  // void onInit() {
-  //   super.onInit();
-  //   fetchCategories(); // جلب البيانات فور إنشاء الـ Controller
-  // }
+ 
+  var categoriesTree = <Category>[].obs;
+  var isLoading = true.obs;
 
-  // /// 1. جلب التصنيفات
-  // Future<void> fetchCategories() async {
-  //   isLoading(true);
-  //   errorMessage('');
-  //   try {
-  //     final categories = await _categoriesService.getCategories();
-  //     categoriesList.assignAll(categories);
-  //   } catch (e) {
-  //     errorMessage(e.toString());
-  //     // يمكنك عرض SnackBar للخطأ باستخدام GetX
-  //     // Get.snackbar('خطأ', e.toString());
-  //   } finally {
-  //     isLoading(false);
-  //   }
-  // }
+ 
+  var categoryProducts = <Product>[].obs;
+  var isProductsLoading = false.obs;
 
-  // /// 2. إنشاء تصنيف جديد
-  // Future<void> addCategory(String name) async {
-  //   try {
-  //     await _categoriesService.createCategory(name: name);
-  //     // بعد نجاح الإضافة، نقوم بجلب القائمة مجدداً لتحديث الواجهة
-  //     await fetchCategories();
-  //     Get.back(); // إغلاق شاشة الإضافة (إن وجدت)
-  //     Get.snackbar('نجاح', 'تم إضافة التصنيف بنجاح');
-  //   } catch (e) {
-  //     Get.snackbar('خطأ', e.toString());
-  //   }
-  // }
+  var errorMessage = ''.obs;
 
-  // /// 3. حذف تصنيف
-  // Future<void> deleteCategory(int id) async {
-  //   try {
-  //     await _categoriesService.deleteCategory(id: id);
-  //     categoriesList.removeWhere(
-  //       (cat) => cat.id == id,
-  //     ); // حذف من القائمة المحلية مباشرة
-  //     Get.snackbar('نجاح', 'تم حذف التصنيف');
-  //   } catch (e) {
-  //     Get.snackbar('خطأ', e.toString());
-  //   }
-  // }
+  @override
+  void onInit() {
+    super.onInit();
+    fetchCategoriesTree();
+  }
+
+ 
+  Future<void> fetchCategoriesTree() async {
+    try {
+      isLoading(true);
+      errorMessage.value = '';
+
+      final response = await api.get('categories/tree');
+
+      if (response != null && response['data'] != null) {
+        List data = response['data'];
+
+        categoriesTree.value = data
+            .map((category) => Category.fromJson(category))
+            .toList();
+      } else {
+        errorMessage.value = 'حدث خطأ أثناء جلب الأقسام';
+      }
+    } catch (e) {
+      print('Error fetching categories tree: $e');
+      errorMessage.value = 'تأكد من الاتصال بالإنترنت';
+    } finally {
+      isLoading(false);
+    }
+  }
+
+
+  Future<void> fetchCategoryProducts(int categoryId, {int page = 1}) async {
+    try {
+      isProductsLoading(true);
+      errorMessage.value = '';
+
+     
+      if (page == 1) {
+        categoryProducts.clear();
+      }
+
+   
+      final response = await api.get(
+        'categories/$categoryId/products',
+        queryParameters: {'page': page},
+      );
+
+      if (response != null && response['data'] != null) {
+       
+        List productsList = [];
+        if (response['data'] is List) {
+          productsList = response['data'];
+        } else if (response['data']['data'] != null) {
+          productsList = response['data']['data'];
+        }
+
+        final newProducts = productsList
+            .map((product) => Product.fromJson(product))
+            .toList();
+
+   
+        categoryProducts.addAll(newProducts);
+      }
+    } catch (e) {
+      print('Error fetching products for category $categoryId: $e');
+      errorMessage.value = 'حدث خطأ أثناء جلب منتجات القسم';
+    } finally {
+      isProductsLoading(false);
+    }
+  }
 }

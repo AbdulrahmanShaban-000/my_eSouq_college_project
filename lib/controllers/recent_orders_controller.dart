@@ -35,7 +35,7 @@ class RecentOrdersController extends GetxController {
     );
   }
 
-  // الاحتفاظ بالدالة القديمة للتوافق
+  
   void addOrderFromMap(Map<String, dynamic> product) {
     final exists = recentOrders.any((item) => item['id'] == product['id']);
     if (exists) return;

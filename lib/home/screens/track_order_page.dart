@@ -16,8 +16,161 @@ class _TrackOrderPageState extends State<TrackOrderPage> {
   @override
   void initState() {
     super.initState();
-    if (widget.initialOrderId != null && widget.initialOrderId!.isNotEmpty) {
-      ordersController.trackOrderMock(widget.initialOrderId!);
+    Future.microtask(() => ordersController.fetchMyOrders());
+
+    final orderId =
+        widget.initialOrderId ?? ordersController.currentOrderId.value;
+    if (orderId.isNotEmpty) {
+      ordersController.fetchOrderDetails(orderId);
+    } else {
+      ordersController.loadLatestOrder();
+    }
+  }
+
+  List<Map<String, dynamic>> _buildOrderHistoryItems() {
+    final allItems = <Map<String, dynamic>>[];
+
+    for (final order in ordersController.myOrders) {
+      final items = order['items'] ?? order['products'] ?? <dynamic>[];
+      if (items is! List) continue;
+
+      for (final item in items) {
+        if (item is! Map<String, dynamic>) continue;
+
+        final product = item['product'];
+        final name =
+            (product is Map<String, dynamic>
+                ? product['name']
+                : item['name'] ?? item['product_name']) ??
+            'Product';
+
+        allItems.add({
+          'name': name.toString(),
+          'status': (order['status'] ?? 'pending').toString(),
+        });
+      }
+    }
+
+    return allItems;
+  }
+
+  void _openHistorySheet(BuildContext context, ThemeData theme) {
+    final historyItems = _buildOrderHistoryItems();
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (sheetContext) {
+        return Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: theme.colorScheme.surface,
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+          ),
+          child: SafeArea(
+            child: SizedBox(
+              height: 420,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      const Expanded(
+                        child: Text(
+                          'Previous order products',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                      IconButton(
+                        onPressed: () => Navigator.pop(sheetContext),
+                        icon: const Icon(Icons.close),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  if (historyItems.isEmpty)
+                    const Expanded(
+                      child: Center(child: Text('No previous orders yet')),
+                    )
+                  else
+                    Expanded(
+                      child: ListView.separated(
+                        itemCount: historyItems.length,
+                        separatorBuilder: (_, __) => const Divider(height: 1),
+                        itemBuilder: (_, index) {
+                          final item = historyItems[index];
+                          final itemStatus = item['status'].toString();
+                          final statusColor = _statusColor(itemStatus, theme);
+
+                          return ListTile(
+                            leading: const Icon(Icons.inventory_2_outlined),
+                            title: Text(item['name'].toString()),
+                            trailing: Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 10,
+                                vertical: 6,
+                              ),
+                              decoration: BoxDecoration(
+                                color: statusColor.withValues(alpha: 0.12),
+                                borderRadius: BorderRadius.circular(999),
+                              ),
+                              child: Text(
+                                _statusLabel(itemStatus),
+                                style: TextStyle(
+                                  color: statusColor,
+                                  fontWeight: FontWeight.w700,
+                                  fontSize: 12,
+                                ),
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  String _statusLabel(String status) {
+    switch (status.toLowerCase()) {
+      case 'pending':
+        return 'Pending';
+      case 'paid':
+        return 'Paid';
+      case 'shipped':
+        return 'Shipped';
+      case 'delivered':
+        return 'Delivered';
+      case 'cancelled':
+        return 'Cancelled';
+      default:
+        return 'Pending';
+    }
+  }
+
+  Color _statusColor(String status, ThemeData theme) {
+    switch (status.toLowerCase()) {
+      case 'pending':
+        return Colors.orange;
+      case 'paid':
+        return Colors.blue;
+      case 'shipped':
+        return Colors.purple;
+      case 'delivered':
+        return Colors.green;
+      case 'cancelled':
+        return Colors.red;
+      default:
+        return theme.colorScheme.primary;
     }
   }
 
@@ -27,7 +180,7 @@ class _TrackOrderPageState extends State<TrackOrderPage> {
     final isDark = theme.brightness == Brightness.dark;
 
     return Scaffold(
-      backgroundColor: Colors.transparent, 
+      backgroundColor: Colors.transparent,
       extendBodyBehindAppBar: true,
       appBar: AppBar(
         title: Text(
@@ -38,6 +191,13 @@ class _TrackOrderPageState extends State<TrackOrderPage> {
         backgroundColor: Colors.transparent,
         elevation: 0,
         foregroundColor: theme.colorScheme.onSurface,
+        actions: [
+          IconButton(
+            onPressed: () => _openHistorySheet(context, theme),
+            icon: const Icon(Icons.history_rounded),
+            tooltip: 'Previous orders',
+          ),
+        ],
       ),
       body: Container(
         decoration: BoxDecoration(
@@ -56,11 +216,17 @@ class _TrackOrderPageState extends State<TrackOrderPage> {
         child: SafeArea(
           child: Obx(() {
             final steps = ordersController.trackingSteps;
+            final orderId = ordersController.currentOrderId.value;
+            final status = ordersController.currentOrderStatus.value;
+            final total = ordersController.orderTotal.value;
+            final address = ordersController.orderAddress.value;
+            final phone = ordersController.orderPhone.value;
+            final products = ordersController.orderProducts;
+
             return SingleChildScrollView(
               padding: const EdgeInsets.all(16),
               child: Column(
                 children: [
-                  // 1. Order Header Card
                   Container(
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
@@ -72,68 +238,98 @@ class _TrackOrderPageState extends State<TrackOrderPage> {
                         Container(
                           width: 60,
                           height: 60,
-                          color: Colors.grey[300],
-                          child: const Icon(Icons.shopping_bag),
+                          decoration: BoxDecoration(
+                            color: theme.colorScheme.primary.withValues(
+                              alpha: 0.12,
+                            ),
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                          child: Icon(
+                            Icons.shopping_bag,
+                            color: theme.colorScheme.primary,
+                          ),
                         ),
                         const SizedBox(width: 16),
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const Text(
-                              "Order #ORD-2024-1256",
-                              style: TextStyle(fontWeight: FontWeight.bold),
-                            ),
-                            const Text("Placed on 20 May 2024"),
-                            Text(
-                              "2 Items • \$89.98",
-                              style: TextStyle(
-                                color: theme.colorScheme.primary,
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                orderId.isEmpty ? 'Order' : 'Order #$orderId',
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 16,
+                                ),
                               ),
-                            ),
-                          ],
+                              const SizedBox(height: 4),
+                              Text(
+                                'Status: ${_statusLabel(status.isEmpty ? 'pending' : status)}',
+                                style: TextStyle(
+                                  color: _statusColor(
+                                    status.isEmpty ? 'pending' : status,
+                                    theme,
+                                  ),
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                'Total: \$${total.toStringAsFixed(2)}',
+                                style: TextStyle(
+                                  color: theme.colorScheme.primary,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
                       ],
                     ),
                   ),
                   const SizedBox(height: 16),
 
-                  // 2. Out for Delivery Banner
                   Container(
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
-                      color: Colors.green[50],
+                      color: _statusColor(
+                        status.isEmpty ? 'pending' : status,
+                        theme,
+                      ).withValues(alpha: 0.12),
                       borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: Colors.green[100]!),
+                      border: Border.all(
+                        color: _statusColor(
+                          status.isEmpty ? 'pending' : status,
+                          theme,
+                        ).withValues(alpha: 0.3),
+                      ),
                     ),
                     child: Row(
                       children: [
-                        const Icon(Icons.local_shipping, color: Colors.green),
+                        Icon(
+                          Icons.local_shipping,
+                          color: _statusColor(
+                            status.isEmpty ? 'pending' : status,
+                            theme,
+                          ),
+                        ),
                         const SizedBox(width: 10),
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const Text(
-                              "Out for Delivery",
-                              style: TextStyle(
-                                color: Colors.green,
-                                fontWeight: FontWeight.bold,
+                        Expanded(
+                          child: Text(
+                            _statusLabel(status.isEmpty ? 'pending' : status),
+                            style: TextStyle(
+                              color: _statusColor(
+                                status.isEmpty ? 'pending' : status,
+                                theme,
                               ),
+                              fontWeight: FontWeight.bold,
                             ),
-                            Text(
-                              "Estimated delivery: 24 May 2024, by 8:00 PM",
-                              style: TextStyle(
-                                fontSize: 12,
-                                color: Colors.grey[700],
-                              ),
-                            ),
-                          ],
+                          ),
                         ),
                       ],
                     ),
                   ),
                   const SizedBox(height: 16),
 
-                  // 3. Timeline
                   Container(
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
@@ -164,26 +360,17 @@ class _TrackOrderPageState extends State<TrackOrderPage> {
                             ),
                             const SizedBox(width: 12),
                             Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    step.label,
-                                    style: TextStyle(
-                                      fontWeight: step.done
-                                          ? FontWeight.bold
-                                          : FontWeight.normal,
-                                    ),
+                              child: Padding(
+                                padding: const EdgeInsets.only(bottom: 12),
+                                child: Text(
+                                  step.label,
+                                  style: TextStyle(
+                                    fontWeight: step.done
+                                        ? FontWeight.bold
+                                        : FontWeight.normal,
+                                    color: theme.colorScheme.onSurface,
                                   ),
-                                  Text(
-                                    "20 May 2024, 10:15 AM",
-                                    style: TextStyle(
-                                      fontSize: 12,
-                                      color: Colors.grey[600],
-                                    ),
-                                  ),
-                                  const SizedBox(height: 20),
-                                ],
+                                ),
                               ),
                             ),
                           ],
@@ -193,7 +380,6 @@ class _TrackOrderPageState extends State<TrackOrderPage> {
                   ),
                   const SizedBox(height: 16),
 
-                  // 4. Delivery Details
                   Container(
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
@@ -204,28 +390,105 @@ class _TrackOrderPageState extends State<TrackOrderPage> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         const Text(
-                          "Delivery Details",
+                          'Products',
                           style: TextStyle(
                             fontWeight: FontWeight.bold,
                             fontSize: 16,
                           ),
                         ),
-                        const ListTile(
-                          leading: Icon(Icons.location_on_outlined),
-                          title: Text("John Doe"),
+                        const SizedBox(height: 12),
+                        if (products.isEmpty)
+                          const Text('No products available')
+                        else
+                          ...products.map((product) {
+                            final name = product['name'] ?? 'Product';
+                            final itemStatus = _statusLabel(
+                              (product['status'] ?? status).toString(),
+                            );
+                            final itemColor = _statusColor(
+                              (product['status'] ?? status).toString(),
+                              theme,
+                            );
+
+                            return Container(
+                              margin: const EdgeInsets.only(bottom: 10),
+                              padding: const EdgeInsets.all(12),
+                              decoration: BoxDecoration(
+                                color: theme.colorScheme.surface.withValues(
+                                  alpha: 0.5,
+                                ),
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: Row(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Icon(
+                                    Icons.inventory_2_outlined,
+                                    color: theme.colorScheme.primary,
+                                  ),
+                                  const SizedBox(width: 10),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          name.toString(),
+                                          style: const TextStyle(
+                                            fontWeight: FontWeight.w600,
+                                          ),
+                                        ),
+                                        const SizedBox(height: 4),
+                                        Text(
+                                          'Status: $itemStatus',
+                                          style: TextStyle(
+                                            color: itemColor,
+                                            fontWeight: FontWeight.w600,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            );
+                          }),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+
+                  Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: theme.cardColor.withValues(alpha: 0.9),
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          'Delivery Details',
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 16,
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        ListTile(
+                          contentPadding: EdgeInsets.zero,
+                          leading: const Icon(Icons.location_on_outlined),
+                          title: const Text('Address'),
                           subtitle: Text(
-                            "123, Park Street, MG Road, Bangalore",
+                            address.isEmpty ? 'No address provided' : address,
                           ),
                         ),
                         ListTile(
-                          leading: const Icon(Icons.local_shipping_outlined),
-                          title: const Text("Delivery"),
-                          trailing: Text(
-                            "1498823123",
-                            style: TextStyle(
-                              color: theme.colorScheme.primary,
-                              fontWeight: FontWeight.bold,
-                            ),
+                          contentPadding: EdgeInsets.zero,
+                          leading: const Icon(Icons.phone_outlined),
+                          title: const Text('Phone'),
+                          subtitle: Text(
+                            phone.isEmpty ? 'No phone number' : phone,
                           ),
                         ),
                       ],
@@ -233,7 +496,6 @@ class _TrackOrderPageState extends State<TrackOrderPage> {
                   ),
                   const SizedBox(height: 20),
 
-                  // 5. Contact Support Button
                   OutlinedButton.icon(
                     onPressed: () {
                       Get.defaultDialog(

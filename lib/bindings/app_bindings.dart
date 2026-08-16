@@ -14,13 +14,11 @@ import 'package:zad/controllers/orders_controller.dart';
 import 'package:zad/core/api/api_consumer.dart';
 import 'package:zad/core/api/dio_consumer.dart';
 import 'package:zad/models/adress_model.dart';
-import 'package:zad/services/categories_service.dart';
 
 class AppBinding extends Bindings {
   @override
   void dependencies() {
-  
-Get.put<ApiConsumer>(DioConsumer(Dio()), permanent: true);
+    Get.put<ApiConsumer>(DioConsumer(Dio()), permanent: true);
 
     Get.put(AuthController(api: Get.find<ApiConsumer>()), permanent: true);
     Get.put(ProductController(), permanent: true);
@@ -31,9 +29,8 @@ Get.put<ApiConsumer>(DioConsumer(Dio()), permanent: true);
     Get.put(OrdersController(), permanent: true);
     Get.put(AddressController(), permanent: true);
     Get.put(RatingController(), permanent: true);
-    Get.put<CategoriesService>(CategoriesService(api: Get.find<ApiConsumer>()), permanent: true);
-    Get.put<CategoriesController>(CategoriesController(), permanent: true);
-
+    // Get.put<CategoriesService>(CategoriesService(api: Get.find<ApiConsumer>()), permanent: true);
+    Get.put<CategoryController>(CategoryController(), permanent: true);
 
     Get.put(
       ProfileController(authController: Get.find<AuthController>()),

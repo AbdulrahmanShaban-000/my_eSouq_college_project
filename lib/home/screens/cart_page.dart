@@ -23,7 +23,6 @@ class CartPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // استخراج خصائص الثيم الحالي
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
 
@@ -88,9 +87,7 @@ class CartPage extends StatelessWidget {
                     onPressed: () async {
                       final ordersController = Get.find<OrdersController>();
                       if (ordersController.currentOrderId.value.isEmpty) {
-                        await ordersController.startTrackingAfterCheckout(
-                          paymentMethod: 'Mock',
-                        );
+                        await ordersController.loadLatestOrder();
                       }
                       Get.to(() => const TrackOrderPage());
                     },

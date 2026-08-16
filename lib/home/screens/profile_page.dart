@@ -26,7 +26,6 @@ class _ProfilePageState extends State<ProfilePage> {
     final RecentOrdersController recentOrdersController =
         Get.find<RecentOrdersController>();
 
-    // استخراج خصائص الثيم الحالي
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
 
@@ -54,8 +53,7 @@ class _ProfilePageState extends State<ProfilePage> {
               expandedHeight: 120,
               floating: true,
               pinned: true,
-              backgroundColor:
-                  Colors.transparent, // شفافة ليتناسب التدرج اللوني بسلاسة
+              backgroundColor: Colors.transparent,
               elevation: 0,
               centerTitle: true,
               title: Text(
@@ -192,9 +190,7 @@ class _ProfilePageState extends State<ProfilePage> {
                         ),
                         title: Text(
                           authController.last_name.value.isNotEmpty
-                              ? authController.first_name.value +
-                                    ' ' +
-                                    authController.last_name.value
+                              ? '${authController.first_name.value} ${authController.last_name.value}'
                               : 'No email',
                           style: TextStyle(color: theme.colorScheme.onSurface),
                         ),
@@ -202,6 +198,28 @@ class _ProfilePageState extends State<ProfilePage> {
                     ],
                   );
                 }),
+              ),
+            ),
+
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+                child: SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton.icon(
+                    onPressed: () => Get.toNamed('/settings'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: theme.colorScheme.primary,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                    ),
+                    icon: const Icon(Icons.settings_outlined),
+                    label: Text('settings'.tr),
+                  ),
+                ),
               ),
             ),
 
@@ -400,7 +418,7 @@ class _ProfilePageState extends State<ProfilePage> {
                       ),
                       trailing: Switch(
                         value: isEnabled,
-                        activeColor: theme.colorScheme.primary,
+                        activeThumbColor: theme.colorScheme.primary,
                         onChanged: (value) {
                           setState(() {
                             isEnabled = value;

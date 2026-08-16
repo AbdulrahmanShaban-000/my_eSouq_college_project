@@ -7,7 +7,7 @@ class StorageService {
   static const String _lastNameKey = 'email';
   static const String _langKey = 'app_language';
   static const String _tokenKey = 'token';
-  static const String _themeKey = 'is_dark_theme'; // ✅ إضافة مفتاح الثيم
+  static const String _themeKey = 'is_dark_theme'; 
 
   static Future<void> setLoggedIn(bool value) async {
     final prefs = await SharedPreferences.getInstance();
@@ -68,7 +68,7 @@ class StorageService {
     return prefs.getString(_langKey) ?? 'en';
   }
 
-  // ✅ دوال الـ Token
+  
   static Future<void> saveToken(String token) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(_tokenKey, token);
@@ -90,7 +90,7 @@ class StorageService {
     return token != null && token.isNotEmpty;
   }
 
-  // ✅ دوال الثيم
+
   static Future<void> setThemeMode(bool isDark) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool(_themeKey, isDark);

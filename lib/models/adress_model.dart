@@ -10,7 +10,7 @@ class AddressModel {
 }
 
 class AddressController extends GetxController {
-  // قائمة العناوين
+ 
   var addresses = <AddressModel>[
     AddressModel(id: '1', title: 'المنزل', details: 'اختر عنوان المنزل هنا'),
     AddressModel(id: '2', title: 'العمل', details: 'اختر عنوان العمل هنا'),

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:zad/controllers/auth_controller.dart';
+import 'package:zad/controllers/categories_controller.dart';
 import 'package:zad/controllers/favourits_controller.dart';
 import 'package:zad/controllers/product_controller.dart';
 import 'package:zad/controllers/cart_controller.dart';
@@ -13,6 +14,7 @@ import 'package:zad/home/screens/product_details_page.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:zad/home/screens/profile_page.dart';
 import 'package:zad/models/Product.dart';
+import 'package:zad/models/categories.dart';
 import 'package:zad/services/product_search_delegate.dart';
 import 'package:zad/services/storage_service.dart';
 import 'package:shimmer/shimmer.dart';
@@ -29,7 +31,34 @@ class _HomePageState extends State<HomePage> {
   final FavouriteController favouriteController = Get.find();
   final CartController cartController = Get.find();
   final RatingController ratingController = Get.find();
+  Set<int> _categoryIdsIncludingChildren(Category category) {
+    final ids = <int>{category.catid};
+    if (category.children != null) {
+      for (final child in category.children!) {
+        ids.addAll(_categoryIdsIncludingChildren(child));
+      }
+    }
+    return ids;
+  }
+
+  Category? _findCategoryById(List<Category> tree, int id) {
+    for (final c in tree) {
+      if (c.catid == id) return c;
+      if (c.children != null) {
+        final found = _findCategoryById(c.children!, id);
+        if (found != null) return found;
+      }
+    }
+    return null;
+  }
+
+  // إضافة متحكم الأقسام
+  final CategoryController categoryController = Get.put(CategoryController());
+
   final RxBool isSearching = false.obs;
+
+  // متغير لتتبع القسم المختار (0 يعني عرض الكل)
+  final RxInt selectedCategoryId = 0.obs;
 
   @override
   void initState() {
@@ -159,7 +188,6 @@ class _HomePageState extends State<HomePage> {
                 ),
               ),
               actions: [
-                // زر البحث
                 Container(
                   margin: const EdgeInsets.only(right: 4),
                   decoration: BoxDecoration(
@@ -175,7 +203,6 @@ class _HomePageState extends State<HomePage> {
                     ),
                   ),
                 ),
-                // زر اللغة
                 Container(
                   margin: const EdgeInsets.only(right: 4),
                   decoration: BoxDecoration(
@@ -191,7 +218,6 @@ class _HomePageState extends State<HomePage> {
                     ),
                   ),
                 ),
-                // زر السلة مع عداد ديناميكي
                 Container(
                   margin: const EdgeInsets.only(right: 16),
                   decoration: BoxDecoration(
@@ -304,6 +330,59 @@ class _HomePageState extends State<HomePage> {
               ),
             ),
 
+            // ===== قائمة الأقسام (Categories) =====
+            SliverToBoxAdapter(
+              child: Obx(() {
+                if (categoryController.isLoading.value) {
+                  return const SizedBox(
+                    height: 55,
+                    child: Center(child: CircularProgressIndicator()),
+                  );
+                }
+
+                final categories = categoryController.categoriesTree;
+                if (categories.isEmpty) return const SizedBox.shrink();
+
+                return Container(
+                  height: 55,
+                  margin: const EdgeInsets.only(top: 16, bottom: 8),
+                  child: ListView.builder(
+                    scrollDirection: Axis.horizontal,
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    itemCount: categories.length + 1,
+                    itemBuilder: (context, index) {
+                      if (index == 0) {
+                        return Obx(() {
+                          final isSelected = selectedCategoryId.value == 0;
+                          return _buildAnimatedCategoryButton(
+                            title: 'All',
+                            isSelected: isSelected,
+                            onTap: () => selectedCategoryId.value = 0,
+                            theme: theme,
+                            isDark: isDark,
+                          );
+                        });
+                      }
+
+                      final category = categories[index - 1];
+                      return Obx(() {
+                        final isSelected =
+                            selectedCategoryId.value == category.catid;
+                        return _buildAnimatedCategoryButton(
+                          title: category.name,
+                          isSelected: isSelected,
+                          onTap: () =>
+                              selectedCategoryId.value = category.catid,
+                          theme: theme,
+                          isDark: isDark,
+                        );
+                      });
+                    },
+                  ),
+                );
+              }),
+            ),
+
             // ===== قائمة المنتجات =====
             Obx(() {
               if (productController.isLoading.value) {
@@ -329,7 +408,23 @@ class _HomePageState extends State<HomePage> {
                 return _buildErrorState(theme);
               }
 
-              final products = productController.products;
+              final allProducts = productController.products;
+
+              final products = selectedCategoryId.value == 0
+                  ? allProducts
+                  : allProducts.where((p) {
+                      final selectedCategory = _findCategoryById(
+                        categoryController.categoriesTree,
+                        selectedCategoryId.value,
+                      );
+                      if (selectedCategory == null) return false;
+
+                      final validIds = _categoryIdsIncludingChildren(
+                        selectedCategory,
+                      );
+                      return p.categoryIds.any((id) => validIds.contains(id));
+                    }).toList();
+
               if (products.isEmpty) {
                 return _buildEmptyState(theme);
               }
@@ -774,9 +869,9 @@ class _HomePageState extends State<HomePage> {
                               vertical: 5,
                             ),
                             decoration: BoxDecoration(
-                              color: inStock
-                                  ? Colors.green.withOpacity(0.1)
-                                  : Colors.red.withOpacity(0.1),
+                              color: unavailable
+                                  ? Colors.red.withOpacity(0.1)
+                                  : Colors.green.withOpacity(0.1),
                               borderRadius: BorderRadius.circular(10),
                             ),
                             child: Row(
@@ -786,20 +881,22 @@ class _HomePageState extends State<HomePage> {
                                   width: 6,
                                   height: 6,
                                   decoration: BoxDecoration(
-                                    color: inStock ? Colors.green : Colors.red,
+                                    color: unavailable
+                                        ? Colors.red
+                                        : Colors.green,
                                     shape: BoxShape.circle,
                                   ),
                                 ),
                                 const SizedBox(width: 4),
                                 Flexible(
                                   child: Text(
-                                    inStock ? 'In Stock' : 'Out of Stock',
+                                    unavailable ? 'Unavailable' : 'in Stock',
                                     style: TextStyle(
                                       fontSize: 10,
                                       fontWeight: FontWeight.w600,
-                                      color: inStock
-                                          ? Colors.green.shade700
-                                          : Colors.red.shade700,
+                                      color: unavailable
+                                          ? Colors.red.shade700
+                                          : Colors.green.shade700,
                                     ),
                                     overflow: TextOverflow.ellipsis,
                                   ),
@@ -1008,6 +1105,71 @@ class _HomePageState extends State<HomePage> {
               style: TextStyle(fontSize: 14, color: Colors.grey.shade600),
             ),
           ],
+        ),
+      ),
+    );
+  }
+
+  // ===================================================================
+  // ✨ Animated Category Button (Implicit Animation)
+  // ===================================================================
+  Widget _buildAnimatedCategoryButton({
+    required String title,
+    required bool isSelected,
+    required VoidCallback onTap,
+    required ThemeData theme,
+    required bool isDark,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 350),
+        curve: Curves.easeOutCubic,
+        padding: EdgeInsets.symmetric(horizontal: isSelected ? 28.0 : 20.0),
+        margin: const EdgeInsets.only(right: 12, top: 4, bottom: 4),
+        alignment: Alignment.center,
+        decoration: BoxDecoration(
+          color: isSelected
+              ? theme.colorScheme.primary
+              : (isDark ? Colors.white.withOpacity(0.08) : Colors.white),
+          borderRadius: BorderRadius.circular(isSelected ? 16 : 25),
+          border: Border.all(
+            color: isSelected
+                ? theme.colorScheme.primary
+                : (isDark
+                      ? Colors.white.withOpacity(0.1)
+                      : Colors.grey.withOpacity(0.2)),
+            width: 1.5,
+          ),
+          boxShadow: isSelected
+              ? [
+                  BoxShadow(
+                    color: theme.colorScheme.primary.withOpacity(0.4),
+                    blurRadius: 12,
+                    offset: const Offset(0, 4),
+                    spreadRadius: 1,
+                  ),
+                ]
+              : [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.02),
+                    blurRadius: 4,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+        ),
+        child: AnimatedDefaultTextStyle(
+          duration: const Duration(milliseconds: 350),
+          curve: Curves.easeOutCubic,
+          style: TextStyle(
+            color: isSelected
+                ? Colors.white
+                : (isDark ? Colors.white70 : theme.colorScheme.onSurface),
+            fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+            fontSize: isSelected ? 15 : 14,
+            fontFamily: Get.locale?.languageCode == 'ar' ? 'Cairo' : null,
+          ),
+          child: Text(title),
         ),
       ),
     );

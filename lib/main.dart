@@ -7,6 +7,7 @@ import 'package:zad/home/screens/checking_out.dart';
 import 'package:zad/home/screens/favourites_page.dart';
 import 'package:zad/home/screens/home_page.dart';
 import 'package:zad/home/screens/profile_page.dart';
+import 'package:zad/home/screens/settings_page.dart';
 import 'package:zad/locale/my_locale.dart';
 import 'package:zad/services/storage_service.dart';
 import 'package:zad/splash/splash_screen.dart';
@@ -41,7 +42,7 @@ class MyApp extends StatelessWidget {
       foregroundColor: Colors.black,
       elevation: 0,
     ),
-    // ✅ التعديل هنا: استخدام CardThemeData بدلاً من CardTheme
+
     cardTheme: const CardThemeData(
       color: Colors.white,
       elevation: 2,
@@ -64,7 +65,7 @@ class MyApp extends StatelessWidget {
       foregroundColor: Colors.white,
       elevation: 0,
     ),
-    // ✅ التعديل هنا: استخدام CardThemeData بدلاً من CardTheme
+
     cardTheme: const CardThemeData(
       color: Color(0xFF1A2A3A),
       elevation: 2,
@@ -78,7 +79,6 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     final ThemeController themeController = Get.put(ThemeController());
 
-    // تعيين قيمة الثيم من SharedPreferences
     themeController.isDark.value = isDark;
 
     return GetMaterialApp(
@@ -107,8 +107,9 @@ class MyApp extends StatelessWidget {
         GetPage(name: '/home', page: () => const HomePage()),
         GetPage(name: '/login', page: () => const LoginScreen()),
         GetPage(name: '/profile', page: () => const ProfilePage()),
-        GetPage(name: '/cart', page: () =>   CartPage()),
-        GetPage(name: '/favourites', page: () =>   FavouritesPage()),
+        GetPage(name: '/settings', page: () => const SettingsPage()),
+        GetPage(name: '/cart', page: () => CartPage()),
+        GetPage(name: '/favourites', page: () => FavouritesPage()),
         GetPage(name: '/checkout', page: () => const CheckingOutPage()),
         GetPage(name: '/track-order', page: () => const TrackOrderPage()),
       ],

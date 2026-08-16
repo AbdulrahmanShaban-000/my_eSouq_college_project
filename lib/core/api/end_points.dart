@@ -18,7 +18,16 @@ class EndPoints {
   static const String favourites = 'favorites';
   static const String cart = 'cart';
   static const String addRate = 'rate/add';
-   static const String categories = 'categories'; 
+  static const String categories = 'categories';
+  static const String orders = 'orders';
+  //for show or destroy order by id
+   static String orderShow(dynamic id) => 'orders/$id';
+  //first name , last name ,mobile number
+  static const String updateProfile = '/user/profile';
+  //current password , new password , confirm new password optional
+  static const String changePassword = '/user/change-password';
+  //for deleting the user account
+  static const String deleteUser = '/user/account';
 }
 
 class ApiKeys {

@@ -1,4 +1,4 @@
-// lib/core/mixins/guest_mixin.dart
+
 import 'package:get/get.dart';
 import 'package:zad/controllers/auth_controller.dart';
 import 'package:zad/services/storage_service.dart';
@@ -13,7 +13,7 @@ mixin GuestMixin {
     }
   }
 
-  // ✅ تعديل: استخدام الدالة getToken() بدلاً من token
+ 
   Future<String?> getToken() async {
     try {
       final authController = Get.find<AuthController>();
@@ -23,7 +23,7 @@ mixin GuestMixin {
     }
   }
 
-  // ✅ تعديل: استخدام الدالة checkValidToken() بدلاً من hasValidToken
+  
   Future<bool> hasValidToken() async {
     try {
       final authController = Get.find<AuthController>();
@@ -33,12 +33,12 @@ mixin GuestMixin {
     }
   }
 
-  // ✅ دالة للتحقق من حالة المستخدم من SharedPreferences مباشرة
+  
   Future<bool> checkLoginStatus() async {
     return await StorageService.isLoggedIn();
   }
 
-  // ✅ دالة للحصول على Token من SharedPreferences مباشرة
+ 
   Future<String?> getStoredToken() async {
     return await StorageService.getToken();
   }

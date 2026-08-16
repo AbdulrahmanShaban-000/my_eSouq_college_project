@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:zad/controllers/theme_controller.dart';
 import 'package:zad/home/screens/home_page.dart';
 import 'package:zad/auth/screens/login_screen.dart';
 
@@ -14,7 +15,8 @@ class _WelcomePageState extends State<WelcomePage> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
+    final themeController = Get.find<ThemeController>();
+    final isDark = themeController.isDark.value;
 
     return Scaffold(
       backgroundColor: theme.colorScheme.surface,
@@ -42,36 +44,71 @@ class _WelcomePageState extends State<WelcomePage> {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                // Language toggle button at the top right
+                // Language and theme toggle buttons at the top right
                 Align(
                   alignment: Alignment.topRight,
-                  child: Container(
-                    decoration: BoxDecoration(
-                      color: isDark
-                          ? Colors.white.withValues(alpha: 0.08)
-                          : Colors.black.withValues(alpha: 0.05),
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(
-                        color: isDark
-                            ? Colors.white.withValues(alpha: 0.1)
-                            : Colors.black.withValues(alpha: 0.08),
-                        width: 0.5,
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Container(
+                        decoration: BoxDecoration(
+                          color: isDark
+                              ? Colors.white.withValues(alpha: 0.08)
+                              : Colors.black.withValues(alpha: 0.05),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(
+                            color: isDark
+                                ? Colors.white.withValues(alpha: 0.1)
+                                : Colors.black.withValues(alpha: 0.08),
+                            width: 0.5,
+                          ),
+                        ),
+                        child: IconButton(
+                          onPressed: () {
+                            final newLang = Get.locale?.languageCode == 'en'
+                                ? 'ar'
+                                : 'en';
+                            Get.updateLocale(Locale(newLang));
+                          },
+                          icon: Icon(
+                            Icons.language_outlined,
+                            color: theme.colorScheme.onSurface,
+                            size: 24,
+                          ),
+                          tooltip: 'change_language'.tr,
+                        ),
                       ),
-                    ),
-                    child: IconButton(
-                      onPressed: () {
-                        final newLang = Get.locale?.languageCode == 'en'
-                            ? 'ar'
-                            : 'en';
-                        Get.updateLocale(Locale(newLang));
-                      },
-                      icon: Icon(
-                        Icons.language_outlined,
-                        color: theme.colorScheme.onSurface,
-                        size: 24,
+                      const SizedBox(width: 12),
+                      Obx(
+                        () => Container(
+                          decoration: BoxDecoration(
+                            color: themeController.isDark.value
+                                ? Colors.white.withValues(alpha: 0.08)
+                                : Colors.black.withValues(alpha: 0.05),
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(
+                              color: themeController.isDark.value
+                                  ? Colors.white.withValues(alpha: 0.1)
+                                  : Colors.black.withValues(alpha: 0.08),
+                              width: 0.5,
+                            ),
+                          ),
+                          child: IconButton(
+                            onPressed: themeController.switchTheme,
+                            icon: Icon(
+                              themeController.isDark.value
+                                  ? Icons.dark_mode_outlined
+                                  : Icons.light_mode_outlined,
+                              color: theme.colorScheme.onSurface,
+                              size: 24,
+                            ),
+                            tooltip: themeController.isDark.value
+                                ? 'Dark Mode'
+                                : 'Light Mode',
+                          ),
+                        ),
                       ),
-                      tooltip: 'change_language'.tr,
-                    ),
+                    ],
                   ),
                 ),
                 const Spacer(flex: 1),

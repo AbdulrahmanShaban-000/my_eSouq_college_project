@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:get/get.dart';
+import 'package:zad/controllers/auth_controller.dart';
 import 'package:zad/controllers/cart_controller.dart';
+import 'package:zad/controllers/orders_controller.dart';
 import 'package:zad/home/screens/home_page.dart';
 import 'package:zad/models/adress_model.dart';
 
@@ -33,9 +35,7 @@ class _CheckingOutPageState extends State<CheckingOutPage> {
                   width: 100,
                   height: 100,
                   decoration: BoxDecoration(
-                    color: Colors.green.withOpacity(
-                      0.15,
-                    ), 
+                    color: Colors.green.withOpacity(0.15),
                     shape: BoxShape.circle,
                   ),
                   child: Icon(
@@ -100,11 +100,9 @@ class _CheckingOutPageState extends State<CheckingOutPage> {
                     ),
                   ),
                   onPressed: () {
-                   
                     Get.back();
 
-                  
-                    Get.offAll(  HomePage());
+                    Get.offAll(HomePage());
                   },
                   child: const Text(
                     "Continue Shopping",
@@ -137,7 +135,7 @@ class _CheckingOutPageState extends State<CheckingOutPage> {
                 style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 20),
-              
+
               if (addressController.addresses.isEmpty)
                 const Padding(
                   padding: EdgeInsets.symmetric(vertical: 20),
@@ -148,7 +146,6 @@ class _CheckingOutPageState extends State<CheckingOutPage> {
                   ),
                 )
               else
-               
                 Column(
                   children: addressController.addresses
                       .map(
@@ -157,7 +154,6 @@ class _CheckingOutPageState extends State<CheckingOutPage> {
                             value: address.id,
                             groupValue: addressController.selectedId.value,
                             onChanged: (value) {
-                            
                               addressController.selectedId.value = value!;
                             },
                           ),
@@ -169,7 +165,7 @@ class _CheckingOutPageState extends State<CheckingOutPage> {
                           ),
                         ),
                       )
-                      .toList(), 
+                      .toList(),
                 ),
 
               const SizedBox(height: 35),
@@ -177,25 +173,18 @@ class _CheckingOutPageState extends State<CheckingOutPage> {
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
-                  onPressed:
-                      addressController
-                          .selectedId
-                          .value
-                          .isEmpty 
+                  onPressed: addressController.selectedId.value.isEmpty
                       ? null
                       : () {
-                         
                           Get.back();
-                         
                         },
                   style: ElevatedButton.styleFrom(
                     padding: const EdgeInsets.symmetric(vertical: 15),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(10),
                     ),
-                    backgroundColor: Get.theme.colorScheme.primary, 
-                    foregroundColor:
-                        Get.theme.colorScheme.onPrimary, 
+                    backgroundColor: Get.theme.colorScheme.primary,
+                    foregroundColor: Get.theme.colorScheme.onPrimary,
                   ),
                   child: Text(
                     addressController.selectedId.value.isEmpty
@@ -264,10 +253,25 @@ class _CheckingOutPageState extends State<CheckingOutPage> {
   final TextEditingController promoController = TextEditingController();
   final AddressController addressController = Get.find<AddressController>();
   final CartController cartController = Get.find<CartController>();
+  final AuthController authController = Get.find<AuthController>();
+  final OrdersController ordersController = Get.find<OrdersController>();
 
   bool validateCodes() {
     return securityController.text.isNotEmpty ||
         promoController.text.isNotEmpty;
+  }
+
+  String _getSelectedAddressText() {
+    if (addressController.addresses.isEmpty) {
+      return '';
+    }
+
+    final selected = addressController.addresses.firstWhere(
+      (address) => address.id == addressController.selectedId.value,
+      orElse: () => addressController.addresses.first,
+    );
+
+    return selected.details.trim();
   }
 
   @override
@@ -291,7 +295,7 @@ class _CheckingOutPageState extends State<CheckingOutPage> {
           gradient: LinearGradient(
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
-           
+
             colors: isDark
                 ? [
                     const Color(0xFF0F2027),
@@ -775,7 +779,7 @@ class _CheckingOutPageState extends State<CheckingOutPage> {
                                         ),
                                       ),
                                       Text(
-                                        "\$2270",
+                                        "\$${(cartController.subtotal + 0).toStringAsFixed(2)}",
                                         style: TextStyle(
                                           fontSize: 26,
                                           fontWeight: FontWeight.bold,
@@ -803,19 +807,64 @@ class _CheckingOutPageState extends State<CheckingOutPage> {
                                           ),
                                         ),
                                       ),
-                                      onPressed: () {
-                                        if (!validateCodes()) {
+                                      onPressed: () async {
+                                        if (cartController.cartItems.isEmpty) {
                                           Get.snackbar(
-                                            "Required",
-                                            "Please enter Security Code or Promo Code",
+                                            "Empty Cart",
+                                            "Add at least one item before checkout",
                                             backgroundColor: Colors.red,
                                             colorText: Colors.white,
                                             snackPosition: SnackPosition.BOTTOM,
                                           );
                                           return;
                                         }
-                                        showSuccessDialog();
-                                        cartController.clearCart();
+
+                                        final address =
+                                            _getSelectedAddressText();
+                                        final phone = authController.phone.value
+                                            .trim();
+
+                                        if (address.isEmpty) {
+                                          Get.snackbar(
+                                            "Address Required",
+                                            "Please choose a shipping address",
+                                            backgroundColor: Colors.red,
+                                            colorText: Colors.white,
+                                            snackPosition: SnackPosition.BOTTOM,
+                                          );
+                                          return;
+                                        }
+
+                                        if (phone.isEmpty) {
+                                          Get.snackbar(
+                                            "Phone Required",
+                                            "Please add your phone number in profile",
+                                            backgroundColor: Colors.red,
+                                            colorText: Colors.white,
+                                            snackPosition: SnackPosition.BOTTOM,
+                                          );
+                                          return;
+                                        }
+
+                                        final response = await ordersController
+                                            .createOrder(
+                                              address: address,
+                                              phone: phone,
+                                              shippingCost: 0,
+                                              paymentMethod:
+                                                  paymentMethods[selectedPayment]['name'],
+                                            );
+
+                                        if (response == null) {
+                                          return;
+                                        }
+
+                                        if (response['message'] != null ||
+                                            response['order'] != null ||
+                                            response['data'] != null) {
+                                          await cartController.clearCart();
+                                          showSuccessDialog();
+                                        }
                                       },
                                       child: Row(
                                         mainAxisAlignment:

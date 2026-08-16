@@ -27,6 +27,82 @@ class _LoginScreenState extends State<LoginScreen> {
     Get.updateLocale(Locale(newLang));
   }
 
+  void showAppInfoDialog() {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return Theme(
+          data: Theme.of(context).copyWith(
+            dialogTheme: DialogThemeData(
+              backgroundColor: const Color(0xFF122B36),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(18),
+              ),
+            ),
+            textTheme: Theme.of(context).textTheme.apply(
+              bodyColor: Colors.white,
+              displayColor: Colors.white,
+            ),
+          ),
+          child: AlertDialog(
+            backgroundColor: const Color(0xFF122B36),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(18),
+            ),
+            title: Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.08),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: const Icon(
+                    Icons.shopping_cart_outlined,
+                    color: Colors.white,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                const Text(
+                  'zad',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ],
+            ),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'app_description'.tr,
+                  style: const TextStyle(color: Colors.white70, height: 1.5),
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  '${'developed_by'.tr} Esouq Team',
+                  style: const TextStyle(
+                    color: Colors.white70,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ],
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(),
+                style: TextButton.styleFrom(foregroundColor: Colors.blueAccent),
+                child: const Text('موافق'),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
   Future<void> login() async {
     if (!_formKey.currentState!.validate()) return;
 
@@ -102,30 +178,7 @@ class _LoginScreenState extends State<LoginScreen> {
           ),
         ],
         leading: IconButton(
-          onPressed: () => showAboutDialog(
-            context: context,
-            applicationName: 'zad',
-            applicationVersion: '1.0.0',
-            applicationIcon: const Icon(
-              Icons.shopping_cart_outlined,
-              color: Color.fromARGB(255, 255, 255, 255),
-            ),
-            children: [
-              Text(
-                'app_description'.tr,
-                style: const TextStyle(
-                  color: Color.fromARGB(179, 255, 255, 255),
-                ),
-              ),
-              const SizedBox(height: 10),
-              Text(
-                'developed_by'.tr + ' Esouq Team',
-                style: const TextStyle(
-                  color: Color.fromARGB(179, 255, 255, 255),
-                ),
-              ),
-            ],
-          ),
+          onPressed: showAppInfoDialog,
           icon: const Icon(Icons.info_outline, color: Colors.white),
         ),
       ),

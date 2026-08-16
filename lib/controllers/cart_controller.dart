@@ -1,9 +1,9 @@
+import 'package:flutter/material.dart' show Colors, WidgetsBinding;
 import 'package:get/get.dart';
 import 'package:zad/core/api/api_consumer.dart';
 import 'package:zad/core/api/end_points.dart';
 import 'package:zad/models/Product.dart';
 import 'package:zad/services/guest_mix.dart';
-
 
 class CartController extends GetxController with GuestMixin {
   final ApiConsumer api;
@@ -19,9 +19,11 @@ class CartController extends GetxController with GuestMixin {
   @override
   void onInit() {
     super.onInit();
-    // التحقق من حالة المستخدم
-    _checkUserStatus();
-    fetchCart();
+    // ✅ تأخير التحميل لضمان تهيئة كل شيء
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _checkUserStatus();
+      fetchCart();
+    });
   }
 
   Future<void> _checkUserStatus() async {
@@ -34,25 +36,26 @@ class CartController extends GetxController with GuestMixin {
   }
 
   Future<void> fetchCart() async {
+    // ✅ إذا كان المستخدم ضيفاً، نعرض سلة فارغة
+    if (isGuestUser.value) {
+      print('👤 Fetching guest cart from local storage');
+      cartItems.clear();
+      update(); // ✅ تحديث الواجهة
+      return;
+    }
+
     isLoading.value = true;
     hasError.value = false;
     errorMessage.value = '';
 
     try {
-      // إذا كان المستخدم ضيفاً، نحاول جلب السلة المحلية أو نعرض سلة فارغة
-      if (isGuestUser.value) {
-        print('👤 Fetching guest cart from local storage');
-        // يمكنك هنا جلب السلة من SharedPreferences إذا كنت تخزنها محلياً
-        // أو عرض سلة فارغة
-        cartItems.clear();
-        isLoading.value = false;
-        return;
-      }
+      print('🔄 جاري جلب السلة...');
 
       final response = await api.get(EndPoints.cart);
 
       if (response == null) {
         cartItems.clear();
+        update(); // ✅ تحديث الواجهة
         return;
       }
 
@@ -68,21 +71,38 @@ class CartController extends GetxController with GuestMixin {
         listData = <dynamic>[];
       }
 
-      cartItems.value = listData
-          .whereType<Map<String, dynamic>>()
-          .map((json) => CartItem.fromJson(json))
-          .toList();
+      print('📊 عدد العناصر في السلة: ${listData.length}');
+
+      // ✅ استخدام assignAll بدلاً من التعيين المباشر
+      cartItems.assignAll(
+        listData
+            .whereType<Map<String, dynamic>>()
+            .map((json) => CartItem.fromJson(json))
+            .toList(),
+      );
+
+      update(); // ✅ تحديث الواجهة
+      print('✅ تم تحديث السلة بنجاح');
     } catch (e) {
       // إذا كان الخطأ 401 والمستخدم ضيف، نتجاهل
       if (e.toString().contains('401') ||
           e.toString().contains('Unauthorized')) {
         print('👤 Guest user, ignoring 401 error');
         cartItems.clear();
+        update(); // ✅ تحديث الواجهة
       } else {
+        print('❌ خطأ في جلب السلة: $e');
         hasError.value = true;
         errorMessage.value = e.toString();
         cartItems.clear();
-        Get.snackbar('Error', errorMessage.value);
+        update(); // ✅ تحديث الواجهة
+        Get.snackbar(
+          'Error',
+          errorMessage.value,
+          snackPosition: SnackPosition.BOTTOM,
+          backgroundColor: Colors.red,
+          colorText: Colors.white,
+        );
       }
     } finally {
       isLoading.value = false;
@@ -90,30 +110,27 @@ class CartController extends GetxController with GuestMixin {
   }
 
   Future<bool> addToCart(Product product, [int quantity = 1]) async {
-    // إذا كان المستخدم ضيفاً، نضيف للسلة محلياً
+    // ✅ إضافة للسلة محلياً أولاً (للمستخدم الضيف والمسجل على حد سواء)
+    print('➕ Adding to cart: ${product.name}');
+
+    final existingIndex = cartItems.indexWhere(
+      (item) => item.product.id == product.id,
+    );
+
+    if (existingIndex >= 0) {
+      cartItems[existingIndex].quantity += quantity;
+    } else {
+      cartItems.add(CartItem(product: product, quantity: quantity));
+    }
+
+    update();
+
     if (isGuestUser.value) {
-      print('👤 Adding to guest cart locally');
-      final existingIndex = cartItems.indexWhere(
-        (item) => item.product.id == product.id,
-      );
+      print('👤 Added to guest cart locally');
 
-      if (existingIndex >= 0) {
-        cartItems[existingIndex].quantity += quantity;
-      } else {
-        cartItems.add(CartItem(product: product, quantity: quantity));
-      }
-      cartItems.refresh();
-
-      Get.snackbar(
-        'Added to cart',
-        '${product.name} added to cart',
-        snackPosition: SnackPosition.BOTTOM,
-        duration: const Duration(seconds: 2),
-      );
       return true;
     }
 
-    // للمستخدم المسجل
     isLoading.value = true;
     try {
       final response = await api.post(
@@ -133,75 +150,83 @@ class CartController extends GetxController with GuestMixin {
           fallbackProduct: product,
         );
 
-        final existingIndex = cartItems.indexWhere(
+        final existingIndex2 = cartItems.indexWhere(
           (item) => item.product.id == updatedItem.product.id,
         );
 
-        if (existingIndex >= 0) {
-          cartItems[existingIndex] = updatedItem;
+        if (existingIndex2 >= 0) {
+          cartItems[existingIndex2] = updatedItem;
         } else {
           cartItems.add(updatedItem);
         }
 
-        cartItems.refresh();
+        update(); // ✅ تحديث الواجهة
       } else {
         await fetchCart();
       }
 
-      Get.snackbar(
-        'Added to cart',
-        '${product.name} added to cart',
-        snackPosition: SnackPosition.BOTTOM,
-        duration: const Duration(seconds: 2),
-      );
-
       return true;
     } catch (e) {
-      Get.snackbar('Error', 'Failed to add item to cart');
-      return false;
+      // ✅ حتى لو فشل الخادم، المنتج موجود محلياً
+      print('⚠️ Failed to add to server, but saved locally: $e');
+      Get.snackbar(
+        'Warning',
+        'Product added locally but failed to sync with server',
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.orange,
+        colorText: Colors.white,
+      );
+      return true;
     } finally {
       isLoading.value = false;
     }
   }
 
   Future<void> removeItem(int productId) async {
-    // إذا كان المستخدم ضيفاً، نحذف محلياً
-    if (isGuestUser.value) {
-      final index = cartItems.indexWhere(
-        (item) => item.product.id == productId,
-      );
-      if (index != -1) {
-        cartItems.removeAt(index);
-        cartItems.refresh();
-        Get.snackbar(
-          'Removed',
-          'Item removed from cart',
-          snackPosition: SnackPosition.BOTTOM,
-        );
-      }
-      return;
-    }
-
+    // ✅ حذف من التخزين المحلي أولاً
     final index = cartItems.indexWhere((item) => item.product.id == productId);
     if (index == -1) return;
 
     final item = cartItems[index];
-    final itemId = item.id;
+    cartItems.removeAt(index);
+    update(); // ✅ تحديث الواجهة
 
-    try {
-      isLoading.value = true;
-      if (itemId != null) {
-        await api.delete('${EndPoints.cart}/$itemId');
-      }
-      cartItems.removeAt(index);
-      cartItems.refresh();
+    // إذا كان المستخدم ضيفاً، نكتفي بالتخزين المحلي
+    if (isGuestUser.value) {
       Get.snackbar(
         'Removed',
         'Item removed from cart',
         snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.orange,
+        colorText: Colors.white,
+      );
+      return;
+    }
+
+    // للمستخدم المسجل، نحذف من الخادم أيضاً
+    final itemId = item.id;
+    if (itemId == null) return;
+
+    try {
+      isLoading.value = true;
+      await api.delete('${EndPoints.cart}/$itemId');
+      Get.snackbar(
+        'Removed',
+        'Item removed from cart',
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.orange,
+        colorText: Colors.white,
       );
     } catch (e) {
-      Get.snackbar('Error', 'Failed to remove item from cart');
+      // ✅ حتى لو فشل الخادم، المنتج محذوف محلياً
+      print('⚠️ Failed to remove from server, but removed locally: $e');
+      Get.snackbar(
+        'Warning',
+        'Removed locally but failed to sync with server',
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.orange,
+        colorText: Colors.white,
+      );
     } finally {
       isLoading.value = false;
     }
@@ -219,13 +244,16 @@ class CartController extends GetxController with GuestMixin {
       return;
     }
 
-    // إذا كان المستخدم ضيفاً، نحدث محلياً
+    // ✅ تحديث محلياً أولاً
+    cartItems[index].quantity = newQuantity;
+    update(); // ✅ تحديث الواجهة
+
+    // إذا كان المستخدم ضيفاً، نكتفي بالتخزين المحلي
     if (isGuestUser.value) {
-      cartItems[index].quantity = newQuantity;
-      cartItems.refresh();
       return;
     }
 
+    // للمستخدم المسجل، نحدث على الخادم أيضاً
     final itemId = item.id;
     if (itemId == null) {
       await fetchCart();
@@ -252,43 +280,46 @@ class CartController extends GetxController with GuestMixin {
           updatedJson,
           fallbackProduct: item.product,
         );
-      } else {
-        cartItems[index].quantity = newQuantity;
+        update(); // ✅ تحديث الواجهة
       }
-
-      cartItems.refresh();
     } catch (e) {
-      Get.snackbar('Error', 'Failed to update cart quantity');
+      // ✅ حتى لو فشل الخادم، التحديث محفوظ محلياً
+      print('⚠️ Failed to update on server, but updated locally: $e');
     } finally {
       isLoading.value = false;
     }
   }
 
   Future<void> clearCart() async {
-    // إذا كان المستخدم ضيفاً، نمسح محلياً
+    // ✅ مسح محلياً أولاً
+    cartItems.clear();
+    update(); // ✅ تحديث الواجهة
+
+    // إذا كان المستخدم ضيفاً، نكتفي بالتخزين المحلي
     if (isGuestUser.value) {
-      cartItems.clear();
-      cartItems.refresh();
       Get.snackbar(
         'Cart cleared',
         'All items removed from cart',
         snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.orange,
+        colorText: Colors.white,
       );
       return;
     }
 
+    // للمستخدم المسجل، نمسح من الخادم أيضاً
     try {
       isLoading.value = true;
       await api.delete(EndPoints.cart);
-      cartItems.clear();
-      cartItems.refresh();
       Get.snackbar(
         'Cart cleared',
         'All items removed from cart',
         snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.orange,
+        colorText: Colors.white,
       );
     } catch (e) {
-      Get.snackbar('Error', 'Failed to clear cart');
+      print('⚠️ Failed to clear on server, but cleared locally: $e');
     } finally {
       isLoading.value = false;
     }
@@ -302,26 +333,51 @@ class CartController extends GetxController with GuestMixin {
     isLoading.value = true;
 
     try {
-      for (var item in cartItems) {
-        await api.post(
-          EndPoints.cart,
-          data: {'product_id': item.product.id, 'quantity': item.quantity},
-        );
+      final List<CartItem> itemsToMerge = List.from(cartItems);
+
+      for (var item in itemsToMerge) {
+        try {
+          await api.post(
+            EndPoints.cart,
+            data: {'product_id': item.product.id, 'quantity': item.quantity},
+          );
+          print('✅ Merged product ${item.product.id}');
+        } catch (e) {
+          print('⚠️ Failed to merge product ${item.product.id}: $e');
+        }
       }
-      // بعد الدمج، نمسح السلة المحلية
+
+      // ✅ مسح السلة المحلية بعد الدمج
       cartItems.clear();
-      // نجلب السلة من الخادم
+      update(); // ✅ تحديث الواجهة
+
+      // ✅ جلب السلة من الخادم
       await fetchCart();
+
       Get.snackbar(
         'Success',
         'Cart merged successfully',
         snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.green,
+        colorText: Colors.white,
       );
     } catch (e) {
       print('Error merging cart: $e');
+      Get.snackbar(
+        'Error',
+        'Failed to merge cart',
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+      );
     } finally {
       isLoading.value = false;
     }
+  }
+
+  // ✅ دالة لتحديث السلة
+  Future<void> refreshCart() async {
+    await fetchCart();
   }
 
   double get subtotal {
@@ -353,7 +409,6 @@ class CartController extends GetxController with GuestMixin {
     final loggedIn = await checkLoginStatus();
     isGuestUser.value = !loggedIn;
     if (loggedIn) {
-      // إذا كان المستخدم مسجلاً، نجلب السلة من الخادم
       await fetchCart();
     }
   }
