@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:zad/controllers/auth_controller.dart';
 import 'package:zad/home/screens/home_page.dart';
-import 'package:zad/home/screens/welcom_page.dart';
+import 'package:zad/screens/welcom_page.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});

@@ -14,7 +14,7 @@ class ProductController extends GetxController {
   var hasError = false.obs;
   var errorMessage = ''.obs;
 
-  // ✅ Pagination variables
+ 
   var currentPage = 1.obs;
   var totalPages = 1.obs;
   var isLoadingMore = false.obs;
@@ -25,7 +25,7 @@ class ProductController extends GetxController {
     loadProducts();
   }
 
-  // ✅ تحميل المنتجات مع Pagination
+  
   Future<void> loadProducts({bool refresh = false}) async {
     if (refresh) {
       currentPage.value = 1;
@@ -37,7 +37,9 @@ class ProductController extends GetxController {
       return;
     }
 
-    isLoading.value = true;
+    if (!isLoadingMore.value) {
+      isLoading.value = true;
+    }
     hasError.value = false;
     errorMessage.value = '';
 
@@ -46,18 +48,18 @@ class ProductController extends GetxController {
         EndPoints.products,
         queryParameters: {
           'page': currentPage.value,
-          'per_page': 20, // ✅ زيادة عدد المنتجات
-          '_': DateTime.now().millisecondsSinceEpoch, // ✅ منع Cache
+          'per_page': 10,
+          '_': DateTime.now().millisecondsSinceEpoch,
         },
       );
 
-      print('📦 Page ${currentPage.value} Response: $response');
+      print(' Page ${currentPage.value} Response: $response');
 
       if (response is Map<String, dynamic>) {
         final data = response['data'];
 
         if (data is Map<String, dynamic>) {
-          // ✅ Paginated response
+          
           final productsData = data['data'] as List? ?? [];
           final pagination = data;
 
@@ -75,13 +77,13 @@ class ProductController extends GetxController {
           }
 
           print(
-            '✅ Page $currentPageData: ${pageProducts.length} products loaded',
+            ' Page $currentPageData: ${pageProducts.length} products loaded',
           );
-          print('✅ Total products: ${products.length}');
+          print(' Total products: ${products.length}');
 
           currentPage.value = currentPageData + 1;
         } else if (data is List) {
-          // ✅ Non-paginated response
+          //  Non-paginated response
           final pageProducts = data.map((json) {
             return Product.fromJson(Map<String, dynamic>.from(json));
           }).toList();
@@ -97,27 +99,26 @@ class ProductController extends GetxController {
         }
       }
 
-      // ✅ طباعة المنتجات للتأكد
-      for (var product in products) {
-        print('📱 Product: ${product.name} - ID: ${product.id}');
+      for (final product in products.toList(growable: false)) {
+        print(' Product: ${product.name} - ID: ${product.id}');
       }
     } on ServerException catch (e) {
       hasError.value = true;
       errorMessage.value = e.errorModel.errorMessage;
       Get.snackbar('خطأ', e.errorModel.errorMessage);
-      print('❌ Server Error: ${e.errorModel.errorMessage}');
+      print(' Server Error: ${e.errorModel.errorMessage}');
     } catch (e) {
       hasError.value = true;
       errorMessage.value = 'فشل تحميل المنتجات: ${e.toString()}';
       Get.snackbar('خطأ', errorMessage.value);
-      print('❌ Error: $e');
+      print(' Error: $e');
     } finally {
       isLoading.value = false;
       isLoadingMore.value = false;
     }
   }
 
-  // ✅ تحميل الصفحة التالية
+  
   Future<void> loadMoreProducts() async {
     if (isLoadingMore.value) return;
     if (currentPage.value > totalPages.value) return;
@@ -126,22 +127,14 @@ class ProductController extends GetxController {
     await loadProducts();
   }
 
-  // ✅ تحديث المنتجات (Pull to Refresh)
   Future<void> refreshProducts() async {
     await loadProducts(refresh: true);
-    Get.snackbar(
-      'تم التحديث',
-      'تم تحميل ${products.length} منتج',
-      snackPosition: SnackPosition.BOTTOM,
-    );
   }
 
-  // ✅ إعادة المحاولة
   Future<void> retryFetch() async {
     await loadProducts(refresh: true);
   }
 
-  // ✅ البحث عن منتج
   Product? findProductById(int id) {
     try {
       return products.firstWhere((product) => product.id == id);

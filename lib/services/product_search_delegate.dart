@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:zad/home/screens/product_details_page.dart';
+import 'package:zad/product/screens/product_details_page.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:zad/models/Product.dart';
 

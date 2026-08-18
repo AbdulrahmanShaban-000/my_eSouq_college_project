@@ -46,7 +46,6 @@ class ProductImage {
     rawPath ??= json['file_path']?.toString().trim();
 
     final normalizedPath = normalizeImagePath(rawPath);
-    print('ProductImage created - ID: ${json['id']}, Path: $normalizedPath');
 
     return ProductImage(
       id: (json['id'] as num?)?.toInt() ?? 0,
@@ -55,6 +54,22 @@ class ProductImage {
       imageableType: json['imageable_type']?.toString(),
       imageableId: (json['imageable_id'] as num?)?.toInt(),
     );
+  }
+
+  /// True if this JSON object actually looks like a single image record
+  /// (has one of the known path keys), not a wrapper/collection object.
+  static bool looksLikeImageJson(Map<String, dynamic> json) {
+    const keys = [
+      'image_path',
+      'imageUrl',
+      'image_url',
+      'url',
+      'path',
+      'src',
+      'thumbnail',
+      'file_path',
+    ];
+    return keys.any((k) => json[k] != null);
   }
 }
 
@@ -177,63 +192,90 @@ class Product {
     return ids.toList();
   }
 
-  factory Product.fromJson(Map<String, dynamic> json) {
-    print('Product.fromJson called for product ID: ${json['id']}');
-    print('Raw JSON: $json');
-
-    final imagesJson = json['images'];
+  /// Parses the "images" field from the API response into a list of
+  /// [ProductImage]. Handles three shapes safely:
+  /// 1. A proper JSON array: [ {...}, {...} ]
+  /// 2. A single image object: { "image_path": "...", "id": 1 }
+  /// 3. A Laravel collection that lost its sequential keys after a
+  ///    ->where()/->filter() without ->values(), which PHP/Laravel then
+  ///    serializes as a JSON *object* instead of an array, e.g.:
+  ///    { "0": {...}, "2": {...}, "5": {...} }
+  ///    Without handling case 3 explicitly, all of those images get
+  ///    collapsed into a single (usually broken) ProductImage — this is
+  ///    the most common reason "the product has several images but only
+  ///    one shows up / I can't swipe between them" happens.
+  static List<ProductImage> _parseImages(
+    dynamic imagesJson,
+    dynamic fallbackId,
+  ) {
     final parsedImages = <ProductImage>[];
 
+    void addFromMapOrString(dynamic entry) {
+      if (entry is Map) {
+        parsedImages.add(
+          ProductImage.fromJson(Map<String, dynamic>.from(entry)),
+        );
+      } else if (entry is String && entry.isNotEmpty) {
+        parsedImages.add(
+          ProductImage.fromJson({'image_path': entry, 'id': fallbackId ?? 0}),
+        );
+      }
+    }
+
     if (imagesJson is List && imagesJson.isNotEmpty) {
-      print('Found ${imagesJson.length} images in response');
       for (final imageEntry in imagesJson) {
-        if (imageEntry is Map) {
-          parsedImages.add(
-            ProductImage.fromJson(Map<String, dynamic>.from(imageEntry)),
-          );
-        } else if (imageEntry is String && imageEntry.isNotEmpty) {
-          parsedImages.add(
-            ProductImage.fromJson({
-              'image_path': imageEntry,
-              'id': json['id'] ?? 0,
-            }),
-          );
-        }
+        addFromMapOrString(imageEntry);
       }
-    } else if (imagesJson is Map) {
+      return parsedImages;
+    }
+
+    if (imagesJson is Map) {
       final imagesMap = Map<String, dynamic>.from(imagesJson);
+
+      // Case: { "data": [ {...}, {...} ] } (paginated/resource wrapper)
       if (imagesMap['data'] is List && (imagesMap['data'] as List).isNotEmpty) {
-        print('Found nested images.data list in response');
         for (final imageEntry in imagesMap['data'] as List) {
-          if (imageEntry is Map) {
-            parsedImages.add(
-              ProductImage.fromJson(Map<String, dynamic>.from(imageEntry)),
-            );
-          } else if (imageEntry is String && imageEntry.isNotEmpty) {
-            parsedImages.add(
-              ProductImage.fromJson({
-                'image_path': imageEntry,
-                'id': json['id'] ?? 0,
-              }),
-            );
-          }
+          addFromMapOrString(imageEntry);
         }
-      } else {
-        print('Found single image object in response');
-        parsedImages.add(ProductImage.fromJson(imagesMap));
+        return parsedImages;
       }
-    } else if (imagesJson is String && imagesJson.isNotEmpty) {
+
+      // Case: this Map is itself one image record.
+      if (ProductImage.looksLikeImageJson(imagesMap)) {
+        parsedImages.add(ProductImage.fromJson(imagesMap));
+        return parsedImages;
+      }
+
+      // Case: non-sequential Laravel collection serialized as an object,
+      // e.g. {"0": {image...}, "2": {image...}}. Every value here is an
+      // image record itself, so unwrap each value instead of treating the
+      // whole map as one broken image.
+      if (imagesMap.values.every((v) => v is Map)) {
+        for (final entry in imagesMap.values) {
+          addFromMapOrString(entry);
+        }
+        return parsedImages;
+      }
+
+      // Fallback: treat as a single (possibly malformed) image object.
+      parsedImages.add(ProductImage.fromJson(imagesMap));
+      return parsedImages;
+    }
+
+    if (imagesJson is String && imagesJson.isNotEmpty) {
       parsedImages.add(
         ProductImage.fromJson({
           'image_path': imagesJson,
-          'id': json['id'] ?? 0,
+          'id': fallbackId ?? 0,
         }),
       );
-    } else {
-      print(
-        'No images array in response or empty for product ID: ${json['id']}',
-      );
     }
+
+    return parsedImages;
+  }
+
+  factory Product.fromJson(Map<String, dynamic> json) {
+    final parsedImages = _parseImages(json['images'], json['id']);
 
     return Product(
       id: (json['id'] as num).toInt(),
@@ -249,7 +291,3 @@ class Product {
     );
   }
 }
-
-/*
-
-*/

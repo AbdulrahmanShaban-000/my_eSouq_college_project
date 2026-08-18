@@ -2,17 +2,17 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:zad/auth/screens/login_screen.dart';
 import 'package:zad/bindings/app_bindings.dart';
-import 'package:zad/home/screens/cart_page.dart';
-import 'package:zad/home/screens/checking_out.dart';
-import 'package:zad/home/screens/favourites_page.dart';
+import 'package:zad/screens/cart_page.dart';
+import 'package:zad/screens/checking_out.dart';
+import 'package:zad/screens/favourites_page.dart';
 import 'package:zad/home/screens/home_page.dart';
-import 'package:zad/home/screens/profile_page.dart';
-import 'package:zad/home/screens/settings_page.dart';
+import 'package:zad/screens/profile_page.dart';
+import 'package:zad/screens/settings_page.dart';
 import 'package:zad/locale/my_locale.dart';
 import 'package:zad/services/storage_service.dart';
 import 'package:zad/splash/splash_screen.dart';
 import 'package:zad/controllers/theme_controller.dart';
-import 'package:zad/home/screens/track_order_page.dart';
+import 'package:zad/screens/track_order_page.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();

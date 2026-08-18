@@ -43,13 +43,6 @@ class ProfileController extends GetxController {
     return null;
   }
 
-  String? validateEmail(String? value) {
-    final v = value?.trim() ?? '';
-    if (v.isEmpty) return 'Email is required';
-    final emailRegex = RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$');
-    if (!emailRegex.hasMatch(v)) return 'Email is invalid';
-    return null;
-  }
 
   Future<void> saveProfile() async {
     final isValid = formKey.currentState?.validate() ?? false;

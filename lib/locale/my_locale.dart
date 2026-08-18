@@ -91,6 +91,9 @@ class MyLocale implements Translations {
       'accessories': 'Accessories',
       'remove_from_wish_list': 'Remove from Wish List',
       's_w_r': 'Oops! Something went wrong',
+      'lm': 'Load More',
+      'most_popular': 'Most Popular',
+      'discounts': 'Discounts',
       // ================= Buying =================
       'subtotal': 'Subtotal',
       'total': 'Total',
@@ -221,6 +224,9 @@ class MyLocale implements Translations {
       'edit_profile': 'تعديل الملف الشخصي',
       'remove_from_wish_list': 'إزالة من قائمة الرغبات',
       's_w_r': 'عذراً! حدث خطأ ما',
+      'lm': 'تحميل المزيد',
+      'most_popular': 'الأكثر شعبية',
+      'discounts': 'الخصومات',
       // ================= Buying =================
       'subtotal': 'المجموع الفرعي',
       'total': 'المجموع',
