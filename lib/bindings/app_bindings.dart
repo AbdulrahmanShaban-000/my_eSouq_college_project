@@ -5,6 +5,7 @@ import 'package:zad/controllers/auth_controller.dart';
 import 'package:zad/controllers/cart_controller.dart';
 import 'package:zad/controllers/categories_controller.dart';
 import 'package:zad/controllers/favourits_controller.dart';
+import 'package:zad/controllers/filtering_controller.dart';
 import 'package:zad/controllers/product_controller.dart';
 import 'package:zad/controllers/rating_controller.dart';
 import 'package:zad/controllers/recent_orders_controller.dart';
@@ -29,7 +30,7 @@ class AppBinding extends Bindings {
     Get.put(OrdersController(), permanent: true);
     Get.put(AddressController(), permanent: true);
     Get.put(RatingController(), permanent: true);
-    // Get.put<CategoriesService>(CategoriesService(api: Get.find<ApiConsumer>()), permanent: true);
+    Get.put(FilterController(), permanent: true);
     Get.put<CategoryController>(CategoryController(), permanent: true);
 
     Get.put(

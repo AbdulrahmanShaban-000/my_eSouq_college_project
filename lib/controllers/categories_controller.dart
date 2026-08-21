@@ -1,18 +1,16 @@
 import 'package:get/get.dart';
 import 'package:zad/core/api/api_consumer.dart';
-import 'package:zad/models/categories.dart'; 
-import 'package:zad/models/Product.dart'; 
+import 'package:zad/models/categories.dart';
+import 'package:zad/models/product.dart';
 
 class CategoryController extends GetxController {
   final ApiConsumer api;
 
   CategoryController() : api = Get.find<ApiConsumer>();
 
- 
   var categoriesTree = <Category>[].obs;
   var isLoading = true.obs;
 
- 
   var categoryProducts = <Product>[].obs;
   var isProductsLoading = false.obs;
 
@@ -24,7 +22,6 @@ class CategoryController extends GetxController {
     fetchCategoriesTree();
   }
 
- 
   Future<void> fetchCategoriesTree() async {
     try {
       isLoading(true);
@@ -49,25 +46,21 @@ class CategoryController extends GetxController {
     }
   }
 
-
   Future<void> fetchCategoryProducts(int categoryId, {int page = 1}) async {
     try {
       isProductsLoading(true);
       errorMessage.value = '';
 
-     
       if (page == 1) {
         categoryProducts.clear();
       }
 
-   
       final response = await api.get(
         'categories/$categoryId/products',
         queryParameters: {'page': page},
       );
 
       if (response != null && response['data'] != null) {
-       
         List productsList = [];
         if (response['data'] is List) {
           productsList = response['data'];
@@ -79,7 +72,6 @@ class CategoryController extends GetxController {
             .map((product) => Product.fromJson(product))
             .toList();
 
-   
         categoryProducts.addAll(newProducts);
       }
     } catch (e) {

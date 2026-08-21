@@ -27,7 +27,6 @@ class ProductGrid extends StatelessWidget with CategoryHelpers {
     final productController = Get.find<ProductController>();
 
     return Obx(() {
-     
       if (productController.isLoading.value) {
         return SliverPadding(
           padding: const EdgeInsets.all(16),
@@ -46,7 +45,6 @@ class ProductGrid extends StatelessWidget with CategoryHelpers {
         );
       }
 
-    
       if (productController.hasError.value) {
         return SliverToBoxAdapter(
           child: ErrorState(
@@ -56,20 +54,17 @@ class ProductGrid extends StatelessWidget with CategoryHelpers {
         );
       }
 
-     
       final products = _filterProducts();
 
-     
       if (products.isEmpty) {
         return SliverToBoxAdapter(
           child: EmptyState(
-            title: 'No Products Available',
-            subtitle: 'Check back later for new items',
+            title: 'no_products_found'.tr,
+            subtitle: 'try_again'.tr,
           ),
         );
       }
 
-      
       return SliverPadding(
         padding: const EdgeInsets.all(16),
         sliver: SliverGrid(

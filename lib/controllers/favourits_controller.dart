@@ -11,20 +11,19 @@ class FavouriteController extends GetxController with GuestMixin {
 
   var favourites = <Product>[].obs;
   var isLoading = false.obs;
-  var isFirstLoad = true.obs;  
+  var isFirstLoad = true.obs;
 
   FavouriteController() : api = Get.find<ApiConsumer>();
 
   @override
   void onInit() {
     super.onInit();
-    
+
     WidgetsBinding.instance.addPostFrameCallback((_) {
       fetchFavourites();
     });
   }
 
- 
   @override
   void onReady() {
     super.onReady();
@@ -32,6 +31,79 @@ class FavouriteController extends GetxController with GuestMixin {
     if (isFirstLoad.value) {
       fetchFavourites();
     }
+  }
+
+  int? _toInt(dynamic value) {
+    if (value is int) return value;
+    if (value is num) return value.toInt();
+    if (value is String) return int.tryParse(value);
+    return null;
+  }
+
+  List<dynamic> _extractFavouriteItems(dynamic response) {
+    if (response is List) return response;
+    if (response is! Map) return const [];
+
+    final map = Map<String, dynamic>.from(response);
+    final candidates = [
+      map['data'],
+      map['favorites'],
+      map['favourites'],
+      map['wishlist'],
+      map['items'],
+    ];
+
+    for (final candidate in candidates) {
+      if (candidate is List) return candidate;
+
+      if (candidate is Map) {
+        final nested = Map<String, dynamic>.from(candidate);
+        if (nested['data'] is List) return nested['data'] as List;
+        if (nested['items'] is List) return nested['items'] as List;
+        if (nested.values.every((value) => value is Map || value is List)) {
+          return nested.values.toList();
+        }
+      }
+    }
+
+    return const [];
+  }
+
+  Product? _productFromFavouriteItem(dynamic item) {
+    if (item is! Map) return null;
+    final map = Map<String, dynamic>.from(item);
+
+    final nestedProduct =
+        map['product'] ??
+        map['item'] ??
+        map['product_data'] ??
+        map['favourite'] ??
+        map['favorite'];
+
+    if (nestedProduct is Map) {
+      return Product.fromJson(Map<String, dynamic>.from(nestedProduct));
+    }
+
+    final looksLikeProduct =
+        map.containsKey('name') &&
+        map.containsKey('price') &&
+        map.containsKey('id');
+
+    if (looksLikeProduct) {
+      return Product.fromJson(map);
+    }
+
+    return null;
+  }
+
+  int? _productIdFromFavouriteItem(dynamic item) {
+    if (item is! Map) return null;
+    final map = Map<String, dynamic>.from(item);
+
+    return _toInt(map['product_id']) ??
+        _toInt(map['productId']) ??
+        _toInt(map['id']) ??
+        (map['product'] is Map ? _toInt((map['product'] as Map)['id']) : null);
   }
 
   Future<void> fetchFavourites() async {
@@ -46,56 +118,44 @@ class FavouriteController extends GetxController with GuestMixin {
     try {
       isLoading.value = true;
 
-      print('🔄 جاري جلب المفضلات...'); // ✅ للتتبع
-
       final response = await api.get(EndPoints.favourites);
 
-      print('📦 البيانات المستلمة: $response'); // ✅ للتتبع
+      final data = _extractFavouriteItems(response);
+      final seenIds = <int>{};
+      final productList = <Product>[];
 
-      final data = response['data'];
+      for (final item in data) {
+        Product? product = _productFromFavouriteItem(item);
+        final productId = _productIdFromFavouriteItem(item);
 
-      if (data is! List) {
-        print('❌ البيانات ليست List'); // ✅ للتتبع
-        favourites.clear();
-        isFirstLoad.value = false;
-        update();
-        return;
+        // Favourite endpoints often return a product summary without its
+        // product_images/main_image relation. Load the full product in that case.
+        if ((product == null || !product.hasValidImage()) &&
+            productId != null) {
+          final detailedProduct = await _getProductById(productId);
+          if (detailedProduct != null) product = detailedProduct;
+        }
+
+        if (product != null && seenIds.add(product.id)) {
+          productList.add(product);
+        }
       }
 
-      // ✅ تحويل البيانات إلى منتجات
-      final List<Product> productList = data
-          .map<Product?>((item) {
-            final productJson = item is Map<String, dynamic>
-                ? (item['product'] ?? item)
-                : item;
+      print('✅ عدد المنتجات: ${productList.length}');
 
-            if (productJson is Map<String, dynamic>) {
-              return Product.fromJson(productJson);
-            }
-
-            return null;
-          })
-          .whereType<Product>()
-          .toList();
-
-      print('✅ عدد المنتجات: ${productList.length}'); // ✅ للتتبع
-
-      // ✅ استخدام assignAll بدلاً من تعيين القيمة مباشرة
       favourites.assignAll(productList);
       isFirstLoad.value = false;
 
-      // ✅ تحديث الواجهة
       update();
 
-      print('✅ تم تحديث المفضلات بنجاح'); // ✅ للتتبع
+      print('✅ تم تحديث المفضلات بنجاح');
     } on DioException catch (e) {
-      print('❌ خطأ في Dio: ${e.message}'); // ✅ للتتبع
+      print('❌ خطأ في Dio: ${e.message}');
       favourites.clear();
       isFirstLoad.value = false;
       update();
-      rethrow;
     } catch (e) {
-      print('❌ خطأ عام: $e'); // ✅ للتتبع
+      print('❌ خطأ عام: $e');
       favourites.clear();
       isFirstLoad.value = false;
       update();
@@ -109,7 +169,6 @@ class FavouriteController extends GetxController with GuestMixin {
   }
 
   Future<void> addToFavouriteByProductId(int productId) async {
-    // ✅ إذا كان المستخدم ضيفاً، نعرض رسالة
     if (!isLoggedIn) {
       Get.snackbar(
         'Login Required',
@@ -137,14 +196,12 @@ class FavouriteController extends GetxController with GuestMixin {
           colorText: Colors.white,
         );
 
-        // ✅ تحديث محلي سريع
         final product = await _getProductById(productId);
         if (product != null && !isFavourite(productId)) {
           favourites.add(product);
           update();
         }
 
-        // ✅ ثم جلب من الخادم للتأكد
         await fetchFavourites();
         return;
       }
@@ -168,13 +225,20 @@ class FavouriteController extends GetxController with GuestMixin {
     }
   }
 
-  // ✅ دالة مساعدة لجلب منتج بواسطة ID
   Future<Product?> _getProductById(int productId) async {
     try {
       final response = await api.get('${EndPoints.products}/$productId');
-      final data = response['data'];
-      if (data is Map<String, dynamic>) {
-        return Product.fromJson(data);
+      if (response is! Map) return null;
+
+      final responseMap = Map<String, dynamic>.from(response);
+      dynamic data = responseMap['data'] ?? responseMap['product'];
+
+      if (data is Map && data['product'] is Map) {
+        data = data['product'];
+      }
+
+      if (data is Map) {
+        return Product.fromJson(Map<String, dynamic>.from(data));
       }
       return null;
     } catch (e) {
@@ -187,7 +251,6 @@ class FavouriteController extends GetxController with GuestMixin {
   }
 
   Future<void> removeFavourite(int productId) async {
-    // ✅ إذا كان المستخدم ضيفاً، نعرض رسالة
     if (!isLoggedIn) {
       Get.snackbar(
         'Login Required',
@@ -202,10 +265,8 @@ class FavouriteController extends GetxController with GuestMixin {
     try {
       await api.delete('${EndPoints.favourites}/$productId');
 
-      // ✅ إزالة المنتج محلياً أولاً
       favourites.removeWhere((item) => item.id == productId);
-      update(); // تحديث الواجهة
-
+      update();
       Get.snackbar(
         'Removed',
         'Product removed from favourites',
@@ -214,7 +275,6 @@ class FavouriteController extends GetxController with GuestMixin {
         colorText: Colors.white,
       );
 
-      // ثم جلب البيانات من الخادم للتأكد
       await fetchFavourites();
     } catch (_) {
       Get.snackbar(
@@ -232,7 +292,6 @@ class FavouriteController extends GetxController with GuestMixin {
   }
 
   Future<void> clearAll() async {
-    // ✅ إذا كان المستخدم ضيفاً، نعرض رسالة
     if (!isLoggedIn) {
       Get.snackbar(
         'Login Required',
@@ -253,7 +312,6 @@ class FavouriteController extends GetxController with GuestMixin {
     return favourites.any((item) => item.id == id);
   }
 
-  // ✅ دالة لتحديث حالة المنتج المفضل محلياً (دون طلب من الخادم)
   void toggleFavouriteLocal(Product product) {
     if (isFavourite(product.id)) {
       favourites.removeWhere((item) => item.id == product.id);
@@ -263,7 +321,6 @@ class FavouriteController extends GetxController with GuestMixin {
     update();
   }
 
-  // ✅ دالة لجلب المفضلات مع إعادة المحاولة
   Future<void> refreshFavourites() async {
     isFirstLoad.value = true;
     await fetchFavourites();

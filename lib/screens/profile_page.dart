@@ -364,7 +364,7 @@ class _ProfilePageState extends State<ProfilePage> {
                               ),
                               const SizedBox(height: 4),
                               Text(
-                                'Price: ${product.price} SAR',
+                                'Price: ${product.price} USD',
                                 style: TextStyle(
                                   color: theme.colorScheme.onSurface.withValues(
                                     alpha: 0.6,

@@ -1,4 +1,5 @@
 import 'package:zad/core/api/end_points.dart';
+import 'package:zad/core/utils/image_url_helper.dart';
 
 class ProductImage {
   final int id;
@@ -16,22 +17,13 @@ class ProductImage {
   });
 
   static String normalizeImagePath(String? rawPath) {
-    final serverBase = EndPoints.baseUrl.replaceFirst(RegExp(r'/api/?$'), '');
-    rawPath = rawPath?.toString().trim();
+    final normalizedPath = ImageUrlHelper.getFullUrl(rawPath);
+    if (normalizedPath.isNotEmpty) return normalizedPath;
 
-    if (rawPath == null || rawPath.isEmpty) {
-      return '$serverBase/storage/default-product.jpg';
-    }
-
-    if (rawPath.startsWith('http')) {
-      return rawPath;
-    }
-
-    if (rawPath.startsWith('/')) {
-      return '$serverBase$rawPath';
-    }
-
-    return '$serverBase/$rawPath';
+    final serverBase = EndPoints.baseUrl
+        .replaceFirst(RegExp(r'/api/?$'), '')
+        .replaceFirst(RegExp(r'/+$'), '');
+    return '$serverBase/storage/default-product.jpg';
   }
 
   factory ProductImage.fromJson(Map<String, dynamic> json) {
@@ -275,15 +267,55 @@ class Product {
   }
 
   factory Product.fromJson(Map<String, dynamic> json) {
-    final parsedImages = _parseImages(json['images'], json['id']);
+    var parsedImages = _parseImages(json['images'], json['id']);
+
+    if (parsedImages.isEmpty) {
+      parsedImages = _parseImages(json['product_images'], json['id']);
+    }
+
+    if (parsedImages.isEmpty) {
+      parsedImages = _parseImages(json['main_image'], json['id']);
+    }
+
+    if (parsedImages.isEmpty) {
+      parsedImages = _parseImages(json['image_path'], json['id']);
+    }
+
+    final rawStock =
+        json['stock'] ??
+        json['quantity'] ??
+        json['available_quantity'] ??
+        json['stock_quantity'] ??
+        json['stock_count'] ??
+        (json['inventory'] is Map
+            ? (json['inventory'] as Map)['quantity'] ??
+                  (json['inventory'] as Map)['stock']
+            : null);
+    final parsedStock = rawStock is bool
+        ? (rawStock ? 1 : 0)
+        : rawStock is num
+        ? rawStock.toInt()
+        : int.tryParse(rawStock?.toString().trim() ?? '') ?? 0;
+
+    final rawIsActive = json['is_active'];
+    final parsedIsActive = rawIsActive is bool
+        ? rawIsActive
+        : rawIsActive is num
+        ? rawIsActive != 0
+        : [
+            '1',
+            'true',
+            'yes',
+            'active',
+          ].contains(rawIsActive?.toString().trim().toLowerCase());
 
     return Product(
       id: (json['id'] as num).toInt(),
       name: json['name']?.toString() ?? '',
       description: json['description']?.toString(),
       price: double.parse(json['price']?.toString() ?? '0'),
-      stock: (json['stock'] as num?)?.toInt() ?? 0,
-      isActive: json['is_active'] == 1 ? 1 : 0,
+      stock: parsedStock,
+      isActive: parsedIsActive ? 1 : 0,
       sku: json['sku']?.toString(),
       slug: json['slug']?.toString(),
       images: parsedImages,

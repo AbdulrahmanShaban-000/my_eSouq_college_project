@@ -7,9 +7,8 @@ import 'package:zad/controllers/favourits_controller.dart';
 import 'package:zad/controllers/theme_controller.dart';
 import 'package:zad/screens/app_drawer.dart';
 import 'package:zad/screens/nav_bar.dart';
-import 'package:zad/product/screens/product_details_page.dart';
+import 'package:zad/products/screens/product_details_page.dart';
 import 'package:zad/models/Product.dart';
-
 import 'package:cached_network_image/cached_network_image.dart';
 
 class FavouritesPage extends StatelessWidget {
@@ -241,7 +240,7 @@ final AuthController authController = Get.find<AuthController>();
                 ],
               ),
 
-              // ===== حالة عدم وجود مفضلة =====
+              
               if (favourites.isEmpty)
                 SliverFillRemaining(
                   child: Center(

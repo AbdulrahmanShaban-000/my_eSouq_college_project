@@ -1,10 +1,9 @@
 import 'dart:io';
-
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:zad/controllers/auth_controller.dart';
-
 import 'package:zad/home/screens/home_page.dart';
+import 'package:zad/auth/screens/user_key_screen.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -44,9 +43,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
       ).showSnackBar(SnackBar(content: Text('accept_terms_first'.tr)));
       return;
     }
-
     setState(() => isLoading = true);
-
     final success = await authController.register(
       firstName: firstName.text.trim(),
       lastName: lastName.text.trim(),
@@ -63,7 +60,17 @@ class _RegisterScreenState extends State<RegisterScreen> {
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(SnackBar(content: Text('welcome'.tr)));
-      Get.offAll(() => const HomePage());
+
+      
+      if (authController.verificationId.value.isNotEmpty) {
+        Get.to(
+          () => UserKey(verificationId: authController.verificationId.value),
+        );
+      } else {
+     
+        Get.offAll(() => const HomePage());
+      }
+
       return;
     }
 
@@ -252,6 +259,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                   ),
                           ),
                         ),
+                        const SizedBox(height: 12),
                       ],
                     ),
                   ),

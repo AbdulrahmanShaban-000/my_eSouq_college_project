@@ -35,6 +35,39 @@ class CartController extends GetxController with GuestMixin {
     }
   }
 
+  int? _toInt(dynamic value) {
+    if (value is int) return value;
+    if (value is num) return value.toInt();
+    if (value is String) return int.tryParse(value);
+    return null;
+  }
+
+  int? _productIdFromCartItem(Map<String, dynamic> json) {
+    final product = json['product'];
+    return _toInt(json['product_id']) ??
+        _toInt(json['productId']) ??
+        _toInt(json['id']) ??
+        (product is Map ? _toInt(product['id']) : null);
+  }
+
+  Future<Product?> _getProductById(int productId) async {
+    try {
+      final response = await api.get('${EndPoints.products}/$productId');
+      if (response is! Map) return null;
+
+      final responseMap = Map<String, dynamic>.from(response);
+      dynamic data = responseMap['data'] ?? responseMap['product'];
+      if (data is Map && data['product'] is Map) data = data['product'];
+
+      if (data is Map) {
+        return Product.fromJson(Map<String, dynamic>.from(data));
+      }
+    } catch (_) {
+      // Keep the cart item usable if the detail request fails.
+    }
+    return null;
+  }
+
   Future<void> fetchCart() async {
     // ✅ إذا كان المستخدم ضيفاً، نعرض سلة فارغة
     if (isGuestUser.value) {
@@ -73,13 +106,31 @@ class CartController extends GetxController with GuestMixin {
 
       print('📊 عدد العناصر في السلة: ${listData.length}');
 
-      // ✅ استخدام assignAll بدلاً من التعيين المباشر
-      cartItems.assignAll(
-        listData
-            .whereType<Map<String, dynamic>>()
-            .map((json) => CartItem.fromJson(json))
-            .toList(),
-      );
+      final parsedCartItems = <CartItem>[];
+      for (final rawItem in listData) {
+        if (rawItem is! Map) continue;
+
+        final json = Map<String, dynamic>.from(rawItem);
+        var cartItem = CartItem.fromJson(json);
+        final productId = _productIdFromCartItem(json);
+
+        // Cart responses may contain a product summary without its
+        // product_images/main_image relation.
+        if (!cartItem.product.hasValidImage() && productId != null) {
+          final detailedProduct = await _getProductById(productId);
+          if (detailedProduct != null) {
+            cartItem = CartItem(
+              id: _toInt(json['id']),
+              product: detailedProduct,
+              quantity: _toInt(json['quantity']) ?? 1,
+            );
+          }
+        }
+
+        parsedCartItems.add(cartItem);
+      }
+
+      cartItems.assignAll(parsedCartItems);
 
       update(); // ✅ تحديث الواجهة
       print('✅ تم تحديث السلة بنجاح');
@@ -432,8 +483,8 @@ class CartItem {
     final hasPrice =
         json['price'] != null && json['price'].toString().isNotEmpty;
 
-    if (productJson is Map<String, dynamic>) {
-      productMap = productJson;
+    if (productJson is Map) {
+      productMap = Map<String, dynamic>.from(productJson);
     } else if (hasName && hasPrice) {
       productMap = Map<String, dynamic>.from(json);
     } else if (fallbackProduct != null) {
@@ -454,6 +505,8 @@ class CartItem {
         'stock': (json['stock'] as num?)?.toInt() ?? 0,
         'is_active': json['is_active'] ?? 1,
         'images': json['images'] ?? [],
+        'product_images': json['product_images'],
+        'main_image': json['main_image'],
         'image_path': json['image_path'],
       };
     }

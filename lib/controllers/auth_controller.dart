@@ -16,6 +16,13 @@ class AuthController extends GetxController {
   var phone = ''.obs;
   var last_name = ''.obs;
   var errorMessage = ''.obs;
+  var verificationId = ''.obs;
+
+  // بيانات التسجيل المعلقة (تُرسَل مع رمز التحقق لأن الـ Backend يتطلبها دائماً)
+  String _pendingFirstName = '';
+  String _pendingLastName = '';
+  String _pendingMobileNumber = '';
+  String _pendingPassword = '';
 
   @override
   void onInit() {
@@ -32,7 +39,7 @@ class AuthController extends GetxController {
     isLoggedIn.value = await StorageService.isLoggedIn();
   }
 
-  // ✅ دالة للتحقق من وجود Token صالح (متزامنة)
+  
   bool get hasValidToken {
     if (!isLoggedIn.value) return false;
     // نستخدم getToken() مع Future
@@ -114,6 +121,31 @@ class AuthController extends GetxController {
         return false;
       }
 
+      // استخراج verification_id إذا كان التسجيل يتطلب تأكيد (رمز تحقق)
+      verificationId.value = response['verification_id']?.toString() ?? '';
+
+      // إذا كان التسجيل يتطلب رمز تحقق، لا نسجل الدخول بعد
+      if (verificationId.value.isNotEmpty) {
+        // حفظ بيانات التسجيل كاملة لإرسالها مع رمز التحقق (الـ Backend يتطلبها دائماً)
+        _pendingFirstName = firstName;
+        _pendingLastName = lastName;
+        _pendingMobileNumber = mobileNumber;
+        _pendingPassword = password;
+
+        if (response['user'] != null) {
+          final pendingUser = UserModel.fromJson(response['user']);
+          await setUser(
+            first_name: pendingUser.firstName,
+            last_name: pendingUser.lastName,
+            phone: pendingUser.mobileNumber,
+          );
+        }
+        print(
+          'Register: verification required. verification_id=${verificationId.value}',
+        );
+        return true;
+      }
+
       if (response['user'] == null) {
         print('Register failed: response missing user. response=$response');
         return false;
@@ -142,6 +174,71 @@ class AuthController extends GetxController {
         errorMessage.value = 'حدث خطأ غير متوقع';
       }
       print('Register Error: ${errorMessage.value}');
+      return false;
+    }
+  }
+
+  /// ✅ التحقق من حساب المستخدم عبر الرمز المرسل.
+  ///
+  /// الرابط المرسل للمستخدم يكون بالشكل:
+  /// http://localhost:8000/api/register?verification_id=...&code=...
+  Future<bool> verifyRegistration({
+    required String verificationId,
+    required String code,
+  }) async {
+    errorMessage.value = '';
+
+    if (verificationId.trim().isEmpty) {
+      errorMessage.value = 'verification_id_required'.tr;
+      print('Verify failed: verificationId is empty');
+      return false;
+    }
+
+    try {
+      final response = await api.post(
+        EndPoints.register,
+        data: {
+          'verification_id': verificationId.trim(),
+          'code': code.trim(),
+          'first_name': _pendingFirstName,
+          'last_name': _pendingLastName,
+          'mobile_number': _pendingMobileNumber,
+          'password': _pendingPassword,
+          'password_confirmation': _pendingPassword,
+        },
+      );
+
+      if (response == null) {
+        errorMessage.value = 'Empty response from server';
+        print('Verify failed: empty response');
+        return false;
+      }
+
+      if (response['user'] != null) {
+        final user = UserModel.fromJson(response['user']);
+        await setUser(
+          first_name: user.firstName,
+          last_name: user.lastName,
+          phone: user.mobileNumber,
+        );
+      }
+
+      final token = response['token']?.toString();
+      if (token != null && token.isNotEmpty) {
+        await StorageService.saveToken(token);
+        print('token saved after verification: $token');
+      }
+
+      await login();
+      this.verificationId.value = '';
+      return true;
+    } catch (e) {
+      if (e is ServerException) {
+        errorMessage.value = e.errorModel.errorMessage;
+      } else {
+        errorMessage.value = 'حدث خطأ غير متوقع';
+      }
+      print('Verify Error: ${errorMessage.value}');
       return false;
     }
   }

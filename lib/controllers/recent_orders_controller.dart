@@ -16,6 +16,8 @@ class RecentOrdersController extends GetxController {
       'is_active': product.isActive,
       'sku': product.sku,
       'slug': product.slug,
+      // Keep the main image when the product is converted back from this map.
+      if (product.hasValidImage()) 'image_path': product.getImageUrl(),
       'added_at': DateTime.now().toIso8601String(),
     };
 
@@ -35,7 +37,6 @@ class RecentOrdersController extends GetxController {
     );
   }
 
-  
   void addOrderFromMap(Map<String, dynamic> product) {
     final exists = recentOrders.any((item) => item['id'] == product['id']);
     if (exists) return;
@@ -54,7 +55,6 @@ class RecentOrdersController extends GetxController {
   void clearOrders() {
     recentOrders.clear();
   }
-
 
   List<Product> get recentProducts {
     return recentOrders.map((map) => Product.fromJson(map)).toList();

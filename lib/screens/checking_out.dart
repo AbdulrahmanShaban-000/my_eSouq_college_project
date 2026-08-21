@@ -228,6 +228,11 @@ class _CheckingOutPageState extends State<CheckingOutPage> {
 
   final List<Map<String, dynamic>> paymentMethods = [
     {
+      "name": "Cash",
+      "image": "images/cash.png", // تأكد من وجود هذه الصورة في مجلد الصور
+      "icon": FontAwesomeIcons.moneyBillWave,
+    },
+    {
       "name": "Apple Pay",
       "image": "images/applepay.png",
       "icon": FontAwesomeIcons.applePay,
@@ -537,51 +542,61 @@ class _CheckingOutPageState extends State<CheckingOutPage> {
                             const SizedBox(height: 20),
 
                             /// PAYMENT BUTTONS
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: List.generate(paymentMethods.length, (
-                                index,
-                              ) {
-                                final method = paymentMethods[index];
-                                final isSelected = selectedPayment == index;
+                            SingleChildScrollView(
+                              scrollDirection: Axis.horizontal,
+                              physics: const BouncingScrollPhysics(),
+                              child: Row(
+                                children: List.generate(paymentMethods.length, (
+                                  index,
+                                ) {
+                                  final method = paymentMethods[index];
+                                  final isSelected = selectedPayment == index;
 
-                                return GestureDetector(
-                                  onTap: () {
-                                    setState(() {
-                                      selectedPayment = index;
-                                    });
-                                  },
-                                  child: AnimatedContainer(
-                                    duration: const Duration(milliseconds: 250),
-                                    width: 75,
-                                    height: 60,
-                                    decoration: BoxDecoration(
-                                      color: isSelected
-                                          ? theme.colorScheme.primary
-                                          : theme.colorScheme.onSurface
-                                                .withValues(alpha: 0.05),
-                                      borderRadius: BorderRadius.circular(18),
-                                      border: Border.all(
-                                        color: isSelected
-                                            ? theme.colorScheme.primary
-                                            : theme.colorScheme.onSurface
-                                                  .withValues(alpha: 0.1),
-                                        width: 2,
+                                  return Padding(
+                                    padding: const EdgeInsets.only(right: 12.0),
+                                    child: GestureDetector(
+                                      onTap: () {
+                                        setState(() {
+                                          selectedPayment = index;
+                                        });
+                                      },
+                                      child: AnimatedContainer(
+                                        duration: const Duration(
+                                          milliseconds: 250,
+                                        ),
+                                        width: 75,
+                                        height: 60,
+                                        decoration: BoxDecoration(
+                                          color: isSelected
+                                              ? theme.colorScheme.primary
+                                              : theme.colorScheme.onSurface
+                                                    .withValues(alpha: 0.05),
+                                          borderRadius: BorderRadius.circular(
+                                            18,
+                                          ),
+                                          border: Border.all(
+                                            color: isSelected
+                                                ? theme.colorScheme.primary
+                                                : theme.colorScheme.onSurface
+                                                      .withValues(alpha: 0.1),
+                                            width: 2,
+                                          ),
+                                        ),
+                                        child: Center(
+                                          child: FaIcon(
+                                            method["icon"],
+                                            color: isSelected
+                                                ? theme.colorScheme.onPrimary
+                                                : theme.colorScheme.onSurface
+                                                      .withValues(alpha: 0.7),
+                                            size: 28,
+                                          ),
+                                        ),
                                       ),
                                     ),
-                                    child: Center(
-                                      child: FaIcon(
-                                        method["icon"],
-                                        color: isSelected
-                                            ? theme.colorScheme.onPrimary
-                                            : theme.colorScheme.onSurface
-                                                  .withValues(alpha: 0.7),
-                                        size: 28,
-                                      ),
-                                    ),
-                                  ),
-                                );
-                              }),
+                                  );
+                                }),
+                              ),
                             ),
 
                             const SizedBox(height: 35),

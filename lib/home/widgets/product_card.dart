@@ -5,7 +5,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:zad/controllers/auth_controller.dart';
 import 'package:zad/controllers/favourits_controller.dart';
 import 'package:zad/controllers/rating_controller.dart';
-import 'package:zad/product/screens/product_details_page.dart';
+import 'package:zad/products/screens/product_details_page.dart';
 import 'package:zad/models/Product.dart';
 
 class ProductCard extends StatelessWidget {
@@ -19,7 +19,7 @@ class ProductCard extends StatelessWidget {
     final isDark = theme.brightness == Brightness.dark;
     final imageUrl = product.getImageUrl();
     final bool inStock = product.stock > 0;
-    final bool unavailable = product.isActive == 0;
+    final bool unavailable = product.isActive == 0 || !inStock;
 
     return GestureDetector(
       onTap: unavailable

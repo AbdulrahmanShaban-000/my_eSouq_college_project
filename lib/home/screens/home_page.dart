@@ -1,9 +1,10 @@
-// lib/home/screens/home_page.dart
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:zad/controllers/categories_controller.dart';
+import 'package:zad/controllers/filtering_controller.dart';
 import 'package:zad/controllers/product_controller.dart';
 import 'package:zad/controllers/rating_controller.dart';
+import 'package:zad/models/Product.dart';
 import 'package:zad/home/widgets/most_popular_products.dart';
 import 'package:zad/screens/app_drawer.dart';
 import 'package:zad/screens/cart_page.dart';
@@ -14,6 +15,7 @@ import 'package:zad/home/widgets/home_app_bar.dart';
 import 'package:zad/home/widgets/category_list.dart';
 import 'package:zad/home/widgets/product_grid.dart';
 import 'package:zad/home/widgets/discounts_widgets.dart';
+import 'package:zad/services/filter_bottom_sheet.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -26,6 +28,7 @@ class _HomePageState extends State<HomePage> {
   final ProductController productController = Get.find();
   final CategoryController categoryController = Get.find();
   final RatingController ratingController = Get.find();
+  final FilterController filterController = Get.put(FilterController());
 
   final RxBool isSearching = false.obs;
   final RxInt selectedCategoryId = 0.obs;
@@ -57,6 +60,7 @@ class _HomePageState extends State<HomePage> {
       productController.refreshProducts(),
       categoryController.fetchCategoriesTree(),
     ]);
+    filterController.resetFilters();
     await _loadAllRatings();
   }
 
@@ -67,6 +71,15 @@ class _HomePageState extends State<HomePage> {
 
     return Scaffold(
       drawer: AppDrawer(),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {
+          Get.bottomSheet(
+            FilterBottomSheet(initialParams: filterController.params.value),
+            isScrollControlled: true,
+          );
+        },
+        child: const Icon(Icons.filter_list_rounded),
+      ),
       bottomNavigationBar: NavBar(
         currentIndex: 0,
         onTap: (index) {
@@ -108,7 +121,6 @@ class _HomePageState extends State<HomePage> {
               parent: BouncingScrollPhysics(),
             ),
             slivers: [
-              // AppBar
               HomeAppBar(
                 products: productController.products,
                 isSearching: isSearching,
@@ -117,22 +129,38 @@ class _HomePageState extends State<HomePage> {
               SliverToBoxAdapter(child: DiscountsSlider()),
               SliverToBoxAdapter(child: MostPopularProducts()),
 
-              // قائمة التصنيفات
               SliverToBoxAdapter(
                 child: CategoryList(selectedCategoryId: selectedCategoryId),
               ),
 
-              // شبكة المنتجات
               Obx(() {
+                if (filterController.isLoading.value) {
+                  return const SliverToBoxAdapter(
+                    child: Padding(
+                      padding: EdgeInsets.all(32.0),
+                      child: Center(child: CircularProgressIndicator()),
+                    ),
+                  );
+                }
+
+                final bool isFiltering =
+                    filterController.params.value.hasActiveFilters;
+
+                final List<Product> displayList = isFiltering
+                    ? List<Product>.from(filterController.filteredProducts)
+                    : List<Product>.from(productController.products);
+
                 return ProductGrid(
-                  allProducts: productController.products,
+                  allProducts: displayList,
                   selectedCategoryId: selectedCategoryId.value,
                   categoriesTree: categoryController.categoriesTree,
                 );
               }),
-
-              // زر تحميل المزيد
               Obx(() {
+                if (filterController.params.value.hasActiveFilters) {
+                  return const SliverToBoxAdapter(child: SizedBox(height: 80));
+                }
+
                 final hasMorePages =
                     productController.currentPage.value <=
                     productController.totalPages.value;

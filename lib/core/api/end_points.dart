@@ -4,6 +4,7 @@ class EndPoints {
   static const String searchProducts = 'products/search';
   static const String filterProducts = 'products/filter';
   static const String register = 'register';
+  static const String registerResend = 'register/resend';
   static const String login = 'login';
   static const String logout = 'logout';
   static String productDetails(dynamic id) => 'products/$id';
